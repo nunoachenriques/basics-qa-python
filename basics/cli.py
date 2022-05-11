@@ -54,7 +54,7 @@ class Cli(object):
         command-line arguments to obtain options and argument values. Set the
         logging level regarding verbosity requested.
 
-        :return: This instance with self.option1 = args.option1 and
+        :return: This instance with self.option1 = args.o and
             self.argument1 = args.argument1
         """
         # noinspection PyTypeChecker
@@ -80,9 +80,9 @@ class Cli(object):
         cmd_line_parser.epilog = (
             "Usage examples:"
             "\n\n  Demonstration of the usage examples with verbose and argument:"
-            "\n    pipenv run python app_cli.py -v argument1_content"
+            "\n    pipenv run python app_cli.py -v argument1"
             "\n\n  Demonstration of the usage examples with option and argument:"
-            "\n    pipenv run python app_cli.py -o option1_content argument1_content"
+            "\n    pipenv run python app_cli.py -o option1 argument1"
         )
         args = cmd_line_parser.parse_args()
         if args.v == 0:
@@ -94,14 +94,14 @@ class Cli(object):
         logging.debug(
             f"Logging set to {logging.getLevelName(logging.getLogger().level)}"
         )
-        self.option1 = args.option1
+        self.option1 = args.o
         self.argument1 = args.argument1
         return self
 
     def run(self, output: bool = True):
         """
         Run the application, place here the description of options and
-        arguments effects and add examples (e.g., -o option1_content).
+        arguments effects and add examples (e.g., -o option1).
 
         :param output: True for result output.
         """

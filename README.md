@@ -23,7 +23,7 @@ Adapt accordingly your Operating System.
 
 ## Prerequisites
 
-`python`, `pip`, `git`, `pipenv`, `pyenv`
+`python`, `venv`, `pip`, `git`, `pipx`, `pipenv`, `pyenv`
 
 ### System-Wide
 
@@ -46,7 +46,7 @@ sudo apt install python3-venv python3-pip python3-dev git
 
 ### User Specific
 
-#### `pipenv`, `pipx`
+#### `pipx`, `pipenv` 
 
 In order to keep your system's Python untainted, every project should be
 contained in a virtual environment. Moreover, use `pipx` to install `pipenv`
@@ -146,18 +146,19 @@ setup.py
 `isort`, `black`
 
 ```shell
-pipenv install black isort --dev
+pipenv install isort black --dev
 ```
 
-`setup.cfg`
+`pyproject.toml`
 
-```shell
-[isort]
-multi_line_output = 3
-include_trailing_comma = True
-force_grid_wrap = 0
-use_parentheses = True
+```toml
+[tool.isort]
 line_length = 120
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+honor_noqa = true
 ```
 
 ```shell
@@ -167,24 +168,24 @@ pipenv run black .
 
 ### Style Enforcement
 
-`flake8`
+`flake8` + `pyproject.toml` support = `flake8p`
 
 ```shell
-pipenv install flake8 --dev
+pipenv install Flake8-pyproject --dev
 ```
 
-`setup.cfg`
+`pyproject.toml`
 
-```shell
-[flake8]
-ignore = E203, E266, E501, W503
+```toml
+[tool.flake8]
 max-line-length = 120
+ignore = ["E203", "E266", "E501", "W503"]
 max-complexity = 18
-select = B,C,E,F,W,T4
+select = ["B", "C", "E", "F", "W", "T4"]
 ```
 
 ```shell
-pipenv run flake8 .
+pipenv run flake8p .
 ```
 
 ### Type Checking
@@ -195,11 +196,11 @@ pipenv run flake8 .
 pipenv install mypy --dev
 ```
 
-`setup.cfg`
+`pyproject.toml`
 
-```shell
-[mypy]
-files = src, test
+```toml
+[tool.mypy]
+files = "."
 ignore_missing_imports = true
 ```
 
@@ -212,17 +213,53 @@ pipenv run mypy .
 `bandit`, `pipenv check`
 
 ```shell
-pipenv install bandit --dev
+pipenv install bandit[toml] --dev
+```
+
+`pyproject.toml`
+
+```toml
+[tool.bandit]
+assert_used.skips = "*/tests/*"
 ```
 
 ```shell
-pipenv run bandit -r .
+pipenv run bandit -c pyproject.toml -r .
 pipenv check
 ```
 
 ### Testing
 
 `pytest`, `pytest-cov`
+
+```shell
+pipenv install pytest pytest-cov --dev
+```
+
+`pyproject.toml`
+
+```toml
+[tool.pytest.ini_options]
+addopts = "--cov --cov-fail-under=100"
+
+[tool.coverage.run]
+source = ["."]
+
+[tool.coverage.report]
+show_missing = true
+omit = ["*/tests/*"]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:"
+]
+```
+
+```shell
+pipenv run pytest
+```
 
 TODO
 

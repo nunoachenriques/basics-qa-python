@@ -6,6 +6,7 @@
 /dist/
 /*.egg-info/
 .git
+.coverage
 .gitignore
 .gitlab-ci.yml
 .dockerignore

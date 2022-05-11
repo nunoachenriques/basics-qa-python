@@ -1,0 +1,41 @@
+### CODE STYLE, SECURITY
+
+[tool.bandit]
+assert_used.skips = "*/tests/*"
+
+[tool.flake8]
+max-line-length = 120
+ignore = ["E203", "E266", "E501", "W503"]
+max-complexity = 18
+select = ["B", "C", "E", "F", "W", "T4"]
+
+[tool.isort]
+line_length = 120
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+honor_noqa = true
+
+[tool.mypy]
+files = "."
+ignore_missing_imports = true
+
+### PYTEST, COVERAGE
+
+[tool.pytest.ini_options]
+addopts = "--cov --cov-fail-under=100"
+
+[tool.coverage.run]
+source = ["."]
+
+[tool.coverage.report]
+show_missing = true
+omit = ["*/tests/*"]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:"
+]
