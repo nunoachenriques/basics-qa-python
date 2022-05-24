@@ -1,4 +1,5 @@
 [![Apache 2.0 License](https://img.shields.io/badge/license-Apache%202.0-blue.svg "Apache 2.0 License")](http://www.apache.org/licenses/LICENSE-2.0.html)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![imports - isort](https://img.shields.io/badge/imports-isort-ef8336.svg)](https://github.com/pycqa/isort)
 [![code style - black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![types - Mypy](https://img.shields.io/badge/types-Mypy-blue.svg)](https://github.com/python/mypy)
@@ -166,7 +167,7 @@ pipenv run isort .
 pipenv run black .
 ```
 
-### Style Enforcement
+### Code Style Enforcement
 
 `flake8` + `pyproject.toml` support = `flake8p`
 
@@ -261,17 +262,103 @@ exclude_lines = [
 pipenv run pytest
 ```
 
-TODO
-
-### Documentation
-
-TODO
-
 ### Git Hooks
 
 `pre-commit`
 
-TODO
+Putting it all together, i.e., automating while distinguishing Git `commit`
+fast-checking requirement from the Git `push` more time-consuming possible
+actions such as `pytest` (including coverage) and `pipenv check`.
+
+```shell
+pipenv install pre-commit --dev
+```
+
+`.pre-commit-config.yaml`
+
+**NOTICE:** The `pipenv check` and the `pytest` (including coverage) are
+configured to run only on Git `push`!
+
+```yaml
+repos:
+  - repo: local
+    hooks:
+
+      ### CODE FORMATTING
+
+      - id: isort
+        name: isort
+        stages: [ commit ]
+        language: system
+        entry: pipenv run isort .
+        types: [ python ]
+
+      - id: black
+        name: black
+        stages: [ commit ]
+        language: system
+        entry: pipenv run black .
+        types: [ python ]
+
+      ### CODE STYLE ENFORCEMENT
+
+      - id: flake8
+        name: flake8
+        stages: [ commit ]
+        language: system
+        entry: pipenv run flake8p .
+        types: [ python ]
+
+      ### TYPE CHECKING
+
+      - id: mypy
+        name: mypy
+        stages: [ commit ]
+        language: system
+        entry: pipenv run mypy .
+        types: [ python ]
+        pass_filenames: false
+
+      ### SECURITY
+
+      - id: bandit
+        name: bandit
+        stages: [ commit ]
+        language: system
+        entry: pipenv run bandit -c pyproject.toml -r .
+        types: [ python ]
+
+      - id: check
+        name: check
+        stages: [ push ]
+        language: system
+        entry: pipenv check
+        types: [ python ]
+
+      ### TESTING
+
+      - id: pytest
+        name: pytest
+        stages: [ push ]
+        language: system
+        entry: pipenv run pytest
+        types: [ python ]
+        pass_filenames: false
+```
+
+```shell
+pipenv run pre-commit install -t pre-commit
+pipenv run pre-commit install -t pre-push
+```
+
+It may be run without the Git `commit` hook triggering. This presents a 
+useful way of testing the `.pre-commit-config.yaml` calls and also the
+configuration in `pyproject.toml`:
+
+```shell
+pipenv run pre-commit run --all-files --hook-stage commit
+pipenv run pre-commit run --all-files --hook-stage push
+```
 
 ## Wrap-up
 

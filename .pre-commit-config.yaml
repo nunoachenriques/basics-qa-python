@@ -1,0 +1,64 @@
+repos:
+  - repo: local
+    hooks:
+
+      ### CODE FORMATTING
+
+      - id: isort
+        name: isort
+        stages: [ commit ]
+        language: system
+        entry: pipenv run isort .
+        types: [ python ]
+
+      - id: black
+        name: black
+        stages: [ commit ]
+        language: system
+        entry: pipenv run black .
+        types: [ python ]
+
+      ### CODE STYLE ENFORCEMENT
+
+      - id: flake8
+        name: flake8
+        stages: [ commit ]
+        language: system
+        entry: pipenv run flake8p .
+        types: [ python ]
+
+      ### TYPE CHECKING
+
+      - id: mypy
+        name: mypy
+        stages: [ commit ]
+        language: system
+        entry: pipenv run mypy .
+        types: [ python ]
+        pass_filenames: false
+
+      ### SECURITY
+
+      - id: bandit
+        name: bandit
+        stages: [ commit ]
+        language: system
+        entry: pipenv run bandit -c pyproject.toml -r .
+        types: [ python ]
+
+      - id: check
+        name: check
+        stages: [ push ]
+        language: system
+        entry: pipenv check
+        types: [ python ]
+
+      ### TESTING
+
+      - id: pytest
+        name: pytest
+        stages: [ push ]
+        language: system
+        entry: pipenv run pytest
+        types: [ python ]
+        pass_filenames: false

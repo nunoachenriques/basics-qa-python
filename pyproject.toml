@@ -1,13 +1,4 @@
-### CODE STYLE, SECURITY
-
-[tool.bandit]
-assert_used.skips = "*/tests/*"
-
-[tool.flake8]
-max-line-length = 120
-ignore = ["E203", "E266", "E501", "W503"]
-max-complexity = 18
-select = ["B", "C", "E", "F", "W", "T4"]
+### CODE FORMATTING
 
 [tool.isort]
 line_length = 120
@@ -17,11 +8,26 @@ force_grid_wrap = 0
 use_parentheses = true
 honor_noqa = true
 
+### CODE STYLE ENFORCEMENT
+
+[tool.flake8]
+max-line-length = 120
+ignore = ["E203", "E266", "E501", "W503"]
+max-complexity = 18
+select = ["B", "C", "E", "F", "W", "T4"]
+
+### TYPE CHECKING
+
 [tool.mypy]
 files = "."
 ignore_missing_imports = true
 
-### PYTEST, COVERAGE
+### SECURITY
+
+[tool.bandit]
+assert_used.skips = "*/tests/*"
+
+### TESTING
 
 [tool.pytest.ini_options]
 addopts = "--cov --cov-fail-under=100"
