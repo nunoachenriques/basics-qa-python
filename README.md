@@ -8,9 +8,7 @@
 # Basics on Quality Assurance in Python
 
 The basics towards better software with Python by means of development best
-practices.
-
-**WARNING:** Work in Progress... NOT COMPLETED, YET...!
+practices. A work in progress with a continuous improvement mindset.
 
 **NOTICE:** Using UNIX shell commands in a Debian GNU/Linux Bash shell.
 Adapt accordingly your Operating System.
@@ -362,7 +360,25 @@ pipenv run pre-commit run --all-files --hook-stage push
 
 ## Wrap-up
 
-TODO
+All the [prerequisites](#prerequisites) must be accomplished (by following
+the above instructions or by means of a previous project installation).
+The project files for [quality assurance](#quality-assurance) must be in place
+(by means of unzipping a download from
+[GitHub](https://github.com/nunoachenriques/basics-qa-python)).
+
+```shell
+pipenv install --dev
+git init
+pipenv run pre-commit install -t pre-commit
+pipenv run pre-commit install -t pre-push
+```
+
+Later, you may add your local Git-based repository to a remote, such as,
+[GitLab](https://gitlab.com).
+
+```shell
+git remote add origin <URL>
+```
 
 ## License
 
