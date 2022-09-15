@@ -148,16 +148,13 @@ setup.py
 pipenv install isort black --dev
 ```
 
+**NOTICE:** black and isort may have conflits, since they both enforce styles in the code (https://pycqa.github.io/isort/docs/configuration/black_compatibility.html). To ensure isort follows the same style as black, add a line in the configuration file as showed below:
+
 `pyproject.toml`
 
 ```toml
 [tool.isort]
-line_length = 120
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-honor_noqa = true
+profile = "black"
 ```
 
 ```shell
