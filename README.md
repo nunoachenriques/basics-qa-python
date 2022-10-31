@@ -10,6 +10,16 @@
 The basics towards better software with Python by means of development best
 practices. A work in progress with a continuous improvement mindset.
 
+There are some basic system-wide prerequisites such as `python`, `venv`, `pip`,
+and `git`. Next, we will install `pipx` at user level and use this tool
+to install `pipenv` isolated from the general environment. Finally, `pyenv`
+is installed to assure that any Python version requested is available and
+easily switched to (independently of the system Python, it uses a collection
+of scripts).
+
+![Pipenv and pre-commit flow diagram](docs/pipenv-pre-commit.jpg)
+<figcaption><code>pipenv</code> and <code>pre-commit</code> flow diagram.</figcaption>
+
 **NOTICE:** Using UNIX shell commands in a Debian GNU/Linux Bash shell.
 Adapt accordingly your Operating System.
 
@@ -22,89 +32,23 @@ Adapt accordingly your Operating System.
 
 ## Prerequisites
 
-`python`, `venv`, `pip`, `git`, `pipx`, `pipenv`, `pyenv`
+**[Linux](docs/README-Linux.md)**
 
-### System-Wide
+**!!!TODO!!! [macOS](docs/README-macOS.md)**
 
-#### [build environment](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)
-
-**NOTICE:** Check https://github.com/pyenv/pyenv/wiki#suggested-build-environment
-for other Operating Systems (e.g., macOS).
-
-```shell
-sudo apt install build-essential libssl-dev zlib1g-dev libbz2-dev \
-libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils \
-tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
-```
-
-#### `python`, `venv`, `pip`, `git`
-
-```shell
-sudo apt install python3-venv python3-pip python3-dev git
-```
-
-### User Specific
-
-#### `pipx`, `pipenv` 
-
-In order to keep your system's Python untainted, every project should be
-contained in a virtual environment. Moreover, use `pipx` to install `pipenv`
-in order to keep the application and support libraries isolated from
-the general environment. Therefore, install `pipx` first and then `pipenv` for
-the environment management.
-
-```shell
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
-pipx install pipenv
-```
-
-#### [`pyenv`](https://github.com/pyenv/pyenv)
-
-Moreover, install `pyenv` to deal with different Python versions safely.
-The [automated installer](https://github.com/pyenv/pyenv-installer) is
-recommended and used this way:
-
-```shell
-curl https://pyenv.run | bash
-```
-
-Edit `~/.bashrc` and add the following:
-
-```shell
-export PATH="$HOME/.pyenv/bin:$PATH"
-eval "$(pyenv init --path)"
-eval "$(pyenv virtualenv-init -)"
-```
-
-Finally, restart your shell to instantiate the path, and call the doctor to
-be safe (check for issues):
-
-```shell
-exec $SHELL
-```
-```shell
-pyenv doctor
-```
-
-#### Start
-
-```shell
-mkdir project_name
-cd project_name
-pipenv --python 3.10
-```
+**!!!TODO!!! [Windows](docs/README-Windows.md)**
 
 ## Quality Assurance
 
-**NOTICE:** Make sure you've completed [Prerequisites](#prerequisites) and
-[Start](#start)!
+**NOTICE:** Make sure you've completed the [Prerequisites](#prerequisites) for
+your operating system case!
 
 ### Clean and Tidy
 
 #### `/.gitignore`
 
-Avoid committing and pushing generated, private, local files.
+Avoid committing and pushing generated, private, local files. More exclusions
+may be added at your discretion.
 
 ```shell
 /**/__pycache__/
@@ -112,32 +56,6 @@ Avoid committing and pushing generated, private, local files.
 /build/
 /dist/
 /*.egg-info/
-```
-
-#### `/.dockerignore`
-
-Avoid bloating your docker with unnecessary files.
-
-```shell
-/k8s/
-/test/
-/**/__pycache__/
-/.idea/
-/build/
-/dist/
-/*.egg-info/
-.git
-.gitignore
-.gitlab-ci.yml
-.dockerignore
-.pre-commit-config.yaml
-Dockerfile
-Pipfile*
-docker_build.sh
-docker_registry.sh
-package_registry.sh
-qa.sh
-setup.py
 ```
 
 ### Code Formatting
