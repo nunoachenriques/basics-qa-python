@@ -1,26 +1,28 @@
-# !!!TODO!!! macOS
+# macOS
 
 ## Prerequisites
 
-`python`, `venv`, `pip`, `git`, `pipx`, `pipenv`, `pyenv`
+`python`, `venv`, `pip`, `git`, `pipx`, `pipenv`, `pyenv`, `brew`
 
 ### System-Wide
 
-#### [Linux build environment (suggested by `pyenv`)](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)
-
-**NOTICE:** Check https://github.com/pyenv/pyenv/wiki#suggested-build-environment
-for other Operating Systems (e.g., macOS, Windows).
-
+#### Homebrew (`brew`)
 ```shell
-sudo apt install build-essential libssl-dev zlib1g-dev libbz2-dev \
-libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils \
-tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 #### `python`, `venv`, `pip`, `git`
 
+[Python macOS Download and Install](https://www.python.org/downloads/macos/)
+
 ```shell
-sudo apt install python3-venv python3-pip python3-dev git
+brew install python
+```
+
+[Git macOS Download and Install](https://git-scm.com/download/mac)
+
+```shell
+brew install git
 ```
 
 ### User Specific
@@ -39,40 +41,24 @@ python3 -m pipx ensurepath
 pipx install pipenv
 ```
 
-#### [`pyenv`](https://github.com/pyenv/pyenv)
+#### [`pyenv`](https://github.com/pyenv/pyenv#homebrew-in-macos)
 
 Moreover, install `pyenv` to deal with different Python versions safely.
-The [automated installer](https://github.com/pyenv/pyenv-installer) is
+The [automated installer](https://github.com/pyenv/pyenv#homebrew-in-macos) is
 recommended and used this way:
 
 ```shell
-curl https://pyenv.run | bash
+brew install pyenv
 ```
 
-Edit `~/.bashrc` and add the following:
-
-```shell
-export PATH="$HOME/.pyenv/bin:$PATH"
-eval "$(pyenv init --path)"
-eval "$(pyenv virtualenv-init -)"
-```
-
-Finally, restart your shell to instantiate the path, and call the doctor to
-be safe (check for issues):
-
-```shell
-exec $SHELL
-```
-```shell
-pyenv doctor
-```
+Finally, restart your shell to instantiate the path!
 
 #### Start
 
 ```shell
 mkdir project_name
 cd project_name
-pipenv --python 3.10
+pipenv --python 3.11
 ```
 
 ## [Quality Assurance](../README.md#quality-assurance)

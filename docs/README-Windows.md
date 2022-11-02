@@ -1,4 +1,4 @@
-# !!!TODO!!! Windows
+# Windows
 
 ## Prerequisites
 
@@ -6,22 +6,13 @@
 
 ### System-Wide
 
-#### [Linux build environment (suggested by `pyenv`)](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)
-
-**NOTICE:** Check https://github.com/pyenv/pyenv/wiki#suggested-build-environment
-for other Operating Systems (e.g., macOS, Windows).
-
-```shell
-sudo apt install build-essential libssl-dev zlib1g-dev libbz2-dev \
-libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils \
-tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
-```
-
 #### `python`, `venv`, `pip`, `git`
 
-```shell
-sudo apt install python3-venv python3-pip python3-dev git
-```
+[Python Windows Download and Install](https://www.python.org/downloads/windows/)
+
+[Git Windows Download and Install](https://git-scm.com/download/win)
+
+**Restart your Windows!**
 
 ### User Specific
 
@@ -33,46 +24,38 @@ in order to keep the application and support libraries isolated from
 the general environment. Therefore, install `pipx` first and then `pipenv` for
 the environment management.
 
-```shell
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
+```commandline
+python -m pip install --user pipx
+python -m pipx ensurepath
+```
+
+**Restart your terminal (e.g., Windows PowerShell)!**
+
+```commandline
 pipx install pipenv
 ```
 
-#### [`pyenv`](https://github.com/pyenv/pyenv)
+#### `pyenv`
 
 Moreover, install `pyenv` to deal with different Python versions safely.
-The [automated installer](https://github.com/pyenv/pyenv-installer) is
+The [automated installer](https://github.com/pyenv-win/pyenv-win) is
 recommended and used this way:
 
-```shell
-curl https://pyenv.run | bash
+Windows PowerShell **Run as Administrator** 
+
+```commandline
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
+Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/pyenv-win/pyenv-win/master/pyenv-win/install-pyenv-win.ps1" -OutFile "./install-pyenv-win.ps1"; &"./install-pyenv-win.ps1"
 ```
 
-Edit `~/.bashrc` and add the following:
-
-```shell
-export PATH="$HOME/.pyenv/bin:$PATH"
-eval "$(pyenv init --path)"
-eval "$(pyenv virtualenv-init -)"
-```
-
-Finally, restart your shell to instantiate the path, and call the doctor to
-be safe (check for issues):
-
-```shell
-exec $SHELL
-```
-```shell
-pyenv doctor
-```
+**Restart your terminal (e.g., Windows PowerShell)!**
 
 #### Start
 
 ```shell
 mkdir project_name
 cd project_name
-pipenv --python 3.10
+pipenv --python 3.11
 ```
 
 ## [Quality Assurance](../README.md#quality-assurance)

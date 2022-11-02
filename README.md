@@ -34,9 +34,9 @@ Adapt accordingly your Operating System.
 
 **[Linux](docs/README-Linux.md)**
 
-**!!!TODO!!! [macOS](docs/README-macOS.md)**
+**[macOS](docs/README-macOS.md)**
 
-**!!!TODO!!! [Windows](docs/README-Windows.md)**
+**[Windows](docs/README-Windows.md)**
 
 ## Quality Assurance
 
@@ -66,7 +66,10 @@ may be added at your discretion.
 pipenv install isort black --dev
 ```
 
-**NOTICE:** black and isort may have conflits, since they both enforce styles in the code (https://pycqa.github.io/isort/docs/configuration/black_compatibility.html). To ensure isort follows the same style as black, add a line in the configuration file as showed below:
+**NOTICE:** black and isort may have conflicts, since they both enforce styles
+in the code (https://pycqa.github.io/isort/docs/configuration/black_compatibility.html).
+To ensure isort follows the same style as black, add a line in the
+configuration file as showed below:
 
 `pyproject.toml`
 
