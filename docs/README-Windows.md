@@ -24,14 +24,14 @@ in order to keep the application and support libraries isolated from
 the general environment. Therefore, install `pipx` first and then `pipenv` for
 the environment management.
 
-```commandline
+```shell
 python -m pip install --user pipx
 python -m pipx ensurepath
 ```
 
 **Restart your terminal (e.g., Windows PowerShell)!**
 
-```commandline
+```shell
 pipx install pipenv
 ```
 
@@ -43,7 +43,7 @@ recommended and used this way:
 
 Windows PowerShell **Run as Administrator** 
 
-```commandline
+```shell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
 Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/pyenv-win/pyenv-win/master/pyenv-win/install-pyenv-win.ps1" -OutFile "./install-pyenv-win.ps1"; &"./install-pyenv-win.ps1"
 ```

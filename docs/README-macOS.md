@@ -51,7 +51,7 @@ recommended and used this way:
 brew install pyenv
 ```
 
-Finally, restart your shell to instantiate the path!
+Finally, **restart your shell** to instantiate the path!
 
 #### Start
 
