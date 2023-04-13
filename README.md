@@ -43,6 +43,10 @@ Adapt accordingly your Operating System.
 **NOTICE:** Make sure you've completed the [Prerequisites](#prerequisites) for
 your operating system case!
 
+**SHORTCUT:** If you've completed the [Prerequisites](#prerequisites) AND
+installed the environment with `pipenv install --dev` then you may jump to
+[Git Hooks](#git-hooks).
+
 ### Clean and Tidy
 
 #### `/.gitignore`

@@ -27,12 +27,12 @@ sudo apt install python3-venv python3-pip python3-dev git
 In order to keep your system's Python untainted, every project should be
 contained in a virtual environment. Moreover, use `pipx` to install `pipenv`
 in order to keep the application and support libraries isolated from
-the general environment. Therefore, install `pipx` first and then `pipenv` for
-the environment management.
+the general environment. Therefore, install `pipx` (system-wide) first and then
+`pipenv` for the environment management.
 
 ```shell
-python3 -m pip install --user pipx
-python3 -m pipx ensurepath
+sudo apt install pipx
+pipx ensurepath
 pipx install pipenv
 ```
 
