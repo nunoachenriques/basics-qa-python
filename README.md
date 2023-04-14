@@ -44,241 +44,10 @@ Adapt accordingly your Operating System.
 your operating system case!
 
 **SHORTCUT:** If you've completed the [Prerequisites](#prerequisites) AND
-installed the environment with `pipenv install --dev` then you may jump to
-[Git Hooks](#git-hooks).
+NOT interested in the details then you may skip this step-by-step guide and
+jump to the next section [Wrap-up](#wrap-up).
 
-### Clean and Tidy
-
-#### `/.gitignore`
-
-Avoid committing and pushing generated, private, local files. More exclusions
-may be added at your discretion.
-
-```shell
-/**/__pycache__/
-/.idea/
-/build/
-/dist/
-/*.egg-info/
-```
-
-### Code Formatting
-
-`isort`, `black`
-
-```shell
-pipenv install isort black --dev
-```
-
-**NOTICE:** black and isort may have conflicts, since they both enforce styles
-in the code (https://pycqa.github.io/isort/docs/configuration/black_compatibility.html).
-To ensure isort follows the same style as black, add a line in the
-configuration file as showed below:
-
-`pyproject.toml`
-
-```toml
-[tool.isort]
-profile = "black"
-```
-
-```shell
-pipenv run isort .
-pipenv run black .
-```
-
-### Code Style Enforcement
-
-`flake8` + `pyproject.toml` support = `flake8p`
-
-```shell
-pipenv install Flake8-pyproject --dev
-```
-
-`pyproject.toml`
-
-```toml
-[tool.flake8]
-max-line-length = 120
-ignore = ["E203", "E266", "E501", "W503"]
-max-complexity = 18
-select = ["B", "C", "E", "F", "W", "T4"]
-```
-
-```shell
-pipenv run flake8p .
-```
-
-### Type Checking
-
-`mypy`
-
-```shell
-pipenv install mypy --dev
-```
-
-`pyproject.toml`
-
-```toml
-[tool.mypy]
-files = "."
-ignore_missing_imports = true
-```
-
-```shell
-pipenv run mypy .
-```
-
-### Security
-
-`bandit`, `pipenv check`
-
-```shell
-pipenv install bandit[toml] --dev
-```
-
-`pyproject.toml`
-
-```toml
-[tool.bandit]
-assert_used.skips = "*/tests/*"
-```
-
-```shell
-pipenv run bandit -c pyproject.toml -r .
-pipenv check
-```
-
-### Testing
-
-`pytest`, `pytest-cov`
-
-```shell
-pipenv install pytest pytest-cov --dev
-```
-
-`pyproject.toml`
-
-```toml
-[tool.pytest.ini_options]
-addopts = "--cov --cov-fail-under=100"
-
-[tool.coverage.run]
-source = ["."]
-
-[tool.coverage.report]
-show_missing = true
-omit = ["*/tests/*"]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise AssertionError",
-    "raise NotImplementedError",
-    "if __name__ == .__main__.:"
-]
-```
-
-```shell
-pipenv run pytest
-```
-
-### Git Hooks
-
-`pre-commit`
-
-Putting it all together, i.e., automating while distinguishing Git `commit`
-fast-checking requirement from the Git `push` more time-consuming possible
-actions such as `pytest` (including coverage) and `pipenv check`.
-
-```shell
-pipenv install pre-commit --dev
-```
-
-`.pre-commit-config.yaml`
-
-**NOTICE:** The `pipenv check` and the `pytest` (including coverage) are
-configured to run only on Git `push`!
-
-```yaml
-repos:
-  - repo: local
-    hooks:
-
-      ### CODE FORMATTING
-
-      - id: isort
-        name: isort
-        stages: [ commit ]
-        language: system
-        entry: pipenv run isort .
-        types: [ python ]
-
-      - id: black
-        name: black
-        stages: [ commit ]
-        language: system
-        entry: pipenv run black .
-        types: [ python ]
-
-      ### CODE STYLE ENFORCEMENT
-
-      - id: flake8
-        name: flake8
-        stages: [ commit ]
-        language: system
-        entry: pipenv run flake8p .
-        types: [ python ]
-
-      ### TYPE CHECKING
-
-      - id: mypy
-        name: mypy
-        stages: [ commit ]
-        language: system
-        entry: pipenv run mypy .
-        types: [ python ]
-        pass_filenames: false
-
-      ### SECURITY
-
-      - id: bandit
-        name: bandit
-        stages: [ commit ]
-        language: system
-        entry: pipenv run bandit -c pyproject.toml -r .
-        types: [ python ]
-
-      - id: check
-        name: check
-        stages: [ push ]
-        language: system
-        entry: pipenv check
-        types: [ python ]
-
-      ### TESTING
-
-      - id: pytest
-        name: pytest
-        stages: [ push ]
-        language: system
-        entry: pipenv run pytest
-        types: [ python ]
-        pass_filenames: false
-```
-
-```shell
-pipenv run pre-commit install -t pre-commit
-pipenv run pre-commit install -t pre-push
-```
-
-It may be run without the Git `commit` hook triggering. This presents a 
-useful way of testing the `.pre-commit-config.yaml` calls and also the
-configuration in `pyproject.toml`:
-
-```shell
-pipenv run pre-commit run --all-files --hook-stage commit
-pipenv run pre-commit run --all-files --hook-stage push
-```
+**[Quality Assurance Step by Step](docs/README-QA-Steps.md)**
 
 ## Wrap-up
 
@@ -293,6 +62,14 @@ pipenv install --dev
 git init
 pipenv run pre-commit install -t pre-commit
 pipenv run pre-commit install -t pre-push
+```
+
+How to test the `.pre-commit-config.yaml` calls and also the configuration in
+`pyproject.toml`:
+
+```shell
+pipenv run pre-commit run --all-files --hook-stage commit
+pipenv run pre-commit run --all-files --hook-stage push
 ```
 
 Later, you may add your local Git-based repository to a remote, such as,
