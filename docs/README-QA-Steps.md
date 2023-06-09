@@ -49,6 +49,10 @@ configuration file as showed below:
 ```toml
 [tool.isort]
 profile = "black"
+
+[tool.black]
+# https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#line-length
+line-length = 100
 ```
 
 ```shell
@@ -68,7 +72,7 @@ pipenv install Flake8-pyproject --dev
 
 ```toml
 [tool.flake8]
-max-line-length = 120
+max-line-length = 100
 ignore = ["E203", "E266", "E501", "W503"]
 max-complexity = 18
 select = ["B", "C", "E", "F", "W", "T4"]

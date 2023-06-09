@@ -72,8 +72,8 @@ pipenv run pre-commit run --all-files --hook-stage commit
 pipenv run pre-commit run --all-files --hook-stage push
 ```
 
-Later, you may add your local Git-based repository to a remote, such as,
-[GitLab](https://gitlab.com).
+Later, you may add your local Git-based repository to a newly created project
+with an `<URL>` provided by a remote (e.g., [GitLab](https://gitlab.com)).
 
 ```shell
 git remote add origin <URL>

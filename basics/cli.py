@@ -26,22 +26,19 @@ from tqdm.auto import tqdm
 
 class Cli(object):
     """
-    Provides bootstrap and complete integration of application run from
-    command-line a Python script, such as:
+    Provide bootstrap and complete command-line integration.
 
-        from basics.cli import Cli
-
-        if __name__ == "__main__":
-            Cli().bootstrap().run()
+    The application may run as a command-line Python script by making use of
+    this class integration. See a ready-made example in ``app_cli.py``.
     """
 
     def __init__(self):
         """
-        Initialisation of the class parameters:
+        Initialise the class parameters:
 
             * self.option1: args option1 placeholder.
             * self.argument1: args argument1 placeholder.
-            * self.version: semantic version in VERSION file.
+            * self.version: semantic version from VERSION file.
         """
         self.option1 = None
         self.argument1 = None
@@ -58,9 +55,7 @@ class Cli(object):
             self.argument1 = args.argument1
         """
         # noinspection PyTypeChecker
-        cmd_line_parser = argparse.ArgumentParser(
-            formatter_class=argparse.RawTextHelpFormatter
-        )
+        cmd_line_parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
         cmd_line_parser.description = (
             f"Basics on Quality Assurance in Python {self.version}"
             "\n\nhttps://github.com/nunoachenriques/basics-qa-python"
@@ -74,9 +69,7 @@ class Cli(object):
         cmd_line_parser.add_argument(
             "-o", metavar="OPTION1", type=str, help="The option1 help description."
         )
-        cmd_line_parser.add_argument(
-            "argument1", type=str, help="The argument1 help description."
-        )
+        cmd_line_parser.add_argument("argument1", type=str, help="The argument1 help description.")
         cmd_line_parser.epilog = (
             "Usage examples:"
             "\n\n  Demonstration of the usage examples with verbose and argument:"
@@ -91,9 +84,7 @@ class Cli(object):
             logging.getLogger().setLevel(logging.INFO)
         else:
             logging.getLogger().setLevel(logging.DEBUG)
-        logging.debug(
-            f"Logging set to {logging.getLevelName(logging.getLogger().level)}"
-        )
+        logging.debug(f"Logging set to {logging.getLevelName(logging.getLogger().level)}")
         self.option1 = args.o
         self.argument1 = args.argument1
         return self
@@ -105,9 +96,7 @@ class Cli(object):
 
         :param output: True for result output.
         """
-        with tqdm(
-            total=1, disable=(logging.getLogger().level >= logging.CRITICAL)
-        ) as bar:
+        with tqdm(total=1, disable=(logging.getLogger().level >= logging.CRITICAL)) as bar:
             bar.set_description_str("Basics QA Python")
             bar.set_postfix_str("Getting and parsing option1...")
             dummy = self.option1

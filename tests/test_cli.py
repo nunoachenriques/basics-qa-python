@@ -26,6 +26,9 @@ import pytest
 
 from basics.cli import Cli
 
+with open("VERSION") as f:
+    VERSION = f.read()
+
 
 class TestCli:
     def test_bootstrap_run(self):
@@ -43,12 +46,12 @@ class TestCli:
         )
         assert result.returncode == 0
         output_expected = (
-            b"\nBasics QA Python 0.0.0"
-            b"\n\noption1 None | argument1: ARGUMENT1"
-            b"\n\nDescription: for anything required..."
-            b"\n\nARGUMENT1\n"
+            f"\nBasics QA Python {VERSION}"
+            "\n\noption1 None | argument1: ARGUMENT1"
+            "\n\nDescription: for anything required..."
+            "\n\nARGUMENT1\n"
         )
-        assert result.stdout == output_expected
+        assert result.stdout == bytes(output_expected, "utf8")
         # Test ONE ARGUMENT, ONE OPTION
         result = subprocess.run(  # nosec B603, B607
             ["pipenv", "run", "python", "app_cli.py", "-o", "OPTION1", "ARGUMENT1"],
@@ -56,12 +59,12 @@ class TestCli:
         )
         assert result.returncode == 0
         output_expected = (
-            b"\nBasics QA Python 0.0.0"
-            b"\n\noption1 OPTION1 | argument1: ARGUMENT1"
-            b"\n\nDescription: for anything required..."
-            b"\n\nARGUMENT1\n"
+            f"\nBasics QA Python {VERSION}"
+            "\n\noption1 OPTION1 | argument1: ARGUMENT1"
+            "\n\nDescription: for anything required..."
+            "\n\nARGUMENT1\n"
         )
-        assert result.stdout == output_expected
+        assert result.stdout == bytes(output_expected, "utf8")
         # Test ONE ARGUMENT, ONE OPTION, ONE VERBOSE
         result = subprocess.run(  # nosec B603, B607
             [
@@ -78,12 +81,12 @@ class TestCli:
         )
         assert result.returncode == 0
         output_expected = (
-            b"\nBasics QA Python 0.0.0"
-            b"\n\noption1 OPTION1 | argument1: ARGUMENT1"
-            b"\n\nDescription: for anything required..."
-            b"\n\nARGUMENT1\n"
+            f"\nBasics QA Python {VERSION}"
+            "\n\noption1 OPTION1 | argument1: ARGUMENT1"
+            "\n\nDescription: for anything required..."
+            "\n\nARGUMENT1\n"
         )
-        assert result.stdout == output_expected
+        assert result.stdout == bytes(output_expected, "utf8")
         # Test ONE ARGUMENT, ONE OPTION, TWO VERBOSE
         result = subprocess.run(  # nosec B603, B607
             [
@@ -100,12 +103,12 @@ class TestCli:
         )
         assert result.returncode == 0
         output_expected = (
-            b"\nBasics QA Python 0.0.0"
-            b"\n\noption1 OPTION1 | argument1: ARGUMENT1"
-            b"\n\nDescription: for anything required..."
-            b"\n\nARGUMENT1\n"
+            f"\nBasics QA Python {VERSION}"
+            "\n\noption1 OPTION1 | argument1: ARGUMENT1"
+            "\n\nDescription: for anything required..."
+            "\n\nARGUMENT1\n"
         )
-        assert result.stdout == output_expected
+        assert result.stdout == bytes(output_expected, "utf8")
 
 
 if __name__ == "__main__":
