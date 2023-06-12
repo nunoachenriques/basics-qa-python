@@ -4,13 +4,6 @@ repos:
 
       ### CODE FORMATTING
 
-      - id: isort
-        name: isort
-        stages: [ commit ]
-        language: system
-        entry: pipenv run isort .
-        types: [ python ]
-
       - id: black
         name: black
         stages: [ commit ]
@@ -20,11 +13,11 @@ repos:
 
       ### CODE STYLE ENFORCEMENT
 
-      - id: flake8
-        name: flake8
+      - id: ruff
+        name: ruff
         stages: [ commit ]
         language: system
-        entry: pipenv run flake8p .
+        entry: pipenv run ruff check .
         types: [ python ]
 
       ### TYPE CHECKING
@@ -38,13 +31,6 @@ repos:
         pass_filenames: false
 
       ### SECURITY
-
-      - id: bandit
-        name: bandit
-        stages: [ commit ]
-        language: system
-        entry: pipenv run bandit -c pyproject.toml -r .
-        types: [ python ]
 
       - id: check
         name: check

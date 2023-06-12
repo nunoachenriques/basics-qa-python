@@ -1,19 +1,48 @@
 ### CODE FORMATTING
 
-[tool.isort]
-profile = "black"
-
 [tool.black]
 # https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#line-length
 line-length = 100
+# Assume Python 3.11 (see `ruff`)
+target-version = ['py311']
+extend-exclude = '''
+(
+  ^/notebooks
+  | ^/.pytest_cache
+  | ^/.ruff_cache
+)
+'''
 
 ### CODE STYLE ENFORCEMENT
 
-[tool.flake8]
-max-line-length = 100
-ignore = ["E203", "E266", "E501", "W503"]
-max-complexity = 18
-select = ["B", "C", "E", "F", "W", "T4"]
+[tool.ruff]
+fix = true
+select = [
+    "A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN",
+    "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP",
+    "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE",
+    "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT",
+]
+ignore = ["D203", "D212", "D400", "D415"]
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "build",
+    "dist",
+]
+# Useful for pre-commit: https://beta.ruff.rs/docs/settings/#force-exclude
+force-exclude = true
+# https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#line-length
+line-length = 100
+# Allow unused variables when underscore-prefixed.
+# dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+# Assume Python 3.11 (see `black`)
+target-version = "py311"
+
+[tool.ruff.mccabe]
+max-complexity = 10
 
 ### TYPE CHECKING
 
@@ -23,8 +52,7 @@ ignore_missing_imports = true
 
 ### SECURITY
 
-[tool.bandit]
-assert_used.skips = "*/tests/*"
+# NO CONFIGURATION REQUIRED. INCLUDED IN `ruff` (e.g., `bandit`) AND `pipenv check`.
 
 ### TESTING
 

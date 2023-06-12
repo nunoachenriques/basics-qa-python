@@ -20,11 +20,14 @@ Command-line interface.
 
 import argparse
 import logging
+from pathlib import Path
+from typing import NoReturn
 
-from tqdm.auto import tqdm
+# Enable logging.
+logger = logging.getLogger(__name__)
 
 
-class Cli(object):
+class Cli:
     """
     Provide bootstrap and complete command-line integration.
 
@@ -32,7 +35,7 @@ class Cli(object):
     this class integration. See a ready-made example in ``app_cli.py``.
     """
 
-    def __init__(self):
+    def __init__(self: "Cli") -> None:
         """
         Initialise the class parameters:
 
@@ -42,19 +45,19 @@ class Cli(object):
         """
         self.option1 = None
         self.argument1 = None
-        with open("VERSION") as f:
+        with Path.open(Path("VERSION")) as f:
             self.version = f.read()
 
-    def bootstrap(self) -> "Cli":
+    def bootstrap(self: "Cli") -> "Cli":
         """
-        Required to protect the start-up and help the user. Parse the
-        command-line arguments to obtain options and argument values. Set the
-        logging level regarding verbosity requested.
+        Protect the start-up and help the user.
+
+        Moreover, parse the command-line arguments to obtain options and
+        argument values. Set the logging level regarding verbosity requested.
 
         :return: This instance with self.option1 = args.o and
             self.argument1 = args.argument1
         """
-        # noinspection PyTypeChecker
         cmd_line_parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
         cmd_line_parser.description = (
             f"Basics on Quality Assurance in Python {self.version}"
@@ -67,7 +70,10 @@ class Cli(object):
             help="Output verbosity: none, info (-v), debug (-vv).",
         )
         cmd_line_parser.add_argument(
-            "-o", metavar="OPTION1", type=str, help="The option1 help description."
+            "-o",
+            metavar="OPTION1",
+            type=str,
+            help="The option1 help description.",
         )
         cmd_line_parser.add_argument("argument1", type=str, help="The argument1 help description.")
         cmd_line_parser.epilog = (
@@ -79,38 +85,31 @@ class Cli(object):
         )
         args = cmd_line_parser.parse_args()
         if args.v == 0:
-            logging.getLogger().setLevel(logging.CRITICAL)
+            logger.setLevel(logging.CRITICAL)
         elif args.v == 1:
-            logging.getLogger().setLevel(logging.INFO)
+            logger.setLevel(logging.INFO)
         else:
-            logging.getLogger().setLevel(logging.DEBUG)
-        logging.debug(f"Logging set to {logging.getLevelName(logging.getLogger().level)}")
+            logger.setLevel(logging.DEBUG)
+        # Set logging format with more information (function name) if DEBUG mode.
+        if logger.level == logging.DEBUG:
+            # noinspection SpellCheckingInspection
+            logger_format = "%(asctime)s | %(name)s | %(funcName)s | %(levelname)s | %(message)s"
+        else:
+            # noinspection SpellCheckingInspection
+            logger_format = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
+        logging.basicConfig(format=logger_format, force=True)
+        logger.info("Logging set to %s", logging.getLevelName(logger.level))
         self.option1 = args.o
         self.argument1 = args.argument1
         return self
 
-    def run(self, output: bool = True):
-        """
-        Run the application, place here the description of options and
-        arguments effects and add examples (e.g., -o option1).
-
-        :param output: True for result output.
-        """
-        with tqdm(total=1, disable=(logging.getLogger().level >= logging.CRITICAL)) as bar:
-            bar.set_description_str("Basics QA Python")
-            bar.set_postfix_str("Getting and parsing option1...")
-            dummy = self.option1
-            bar.set_postfix_str(dummy)
-            bar.update()
-            bar.set_postfix_str("")
-        if output:
-            result: str = ""
-            if self.argument1 is not None:
-                result = self.argument1
-            print(
-                f"\nBasics QA Python {self.version}"
-                f"\n\noption1 {self.option1} | argument1: {self.argument1}"
-                "\n\nDescription: for anything required..."
-                f"\n\n{result}"
-            )
+    def run(self: "Cli") -> NoReturn:
+        """Run the application."""
+        logger.info(
+            "Basics QA Python %s | option1: %s | argument1: %s | Started",
+            self.version,
+            self.option1,
+            self.argument1,
+        )
+        # Add code to run your application below this line and before the SystemExit.
         raise SystemExit(0)
