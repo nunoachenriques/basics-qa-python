@@ -3,10 +3,22 @@
 This document explains the steps required to install and configure all the
 required elements of the quality assurance in place for any Python project.
 Moreover, includes the configuration details for the `pyproject.toml` and
-`.pre-commit-config.yaml` files regarding quality, security, and testing.
+`.pre-commit-config.yaml` files regarding code quality, security, and testing.
 
-![Pipenv and pre-commit flow diagram](pipenv-pre-commit.jpg)
-<figcaption><code>pipenv</code> and <code>pre-commit</code> flow diagram.</figcaption>
+```text
+pipx
+  |
+  | isolated install
+  v
+pipenv (virtual environment installs)
+  |
+  |-uses-> pyenv
+  |
+  |-uses-> pip
+  |                 |-pre-commit-> black -> ruff -> mypy
+  |-> pre-commit ---|
+                    |-pre-push-> pipenv check -> pytest + coverage
+```
 
 **NOTICE:** Using UNIX shell commands in a Debian GNU/Linux Bash shell.
 Adapt accordingly your Operating System.
@@ -33,53 +45,80 @@ may be added at your discretion.
 
 ### Code Formatting
 
-`isort`, `black`
+`black`
 
 ```shell
-pipenv install isort black --dev
+pipenv install black --dev
 ```
-
-**NOTICE:** black and isort may have conflicts, since they both enforce styles
-in the code (https://pycqa.github.io/isort/docs/configuration/black_compatibility.html).
-To ensure isort follows the same style as black, add a line in the
-configuration file as showed below:
 
 `pyproject.toml`
 
 ```toml
-[tool.isort]
-profile = "black"
-
 [tool.black]
 # https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#line-length
 line-length = 100
+# Assume Python 3.11 (see `ruff`)
+target-version = ['py311']
+extend-exclude = '''
+(
+  ^/notebooks
+  | ^/.pytest_cache
+  | ^/.ruff_cache
+)
+'''
 ```
 
 ```shell
-pipenv run isort .
 pipenv run black .
 ```
 
 ### Code Style Enforcement
 
-`flake8` + `pyproject.toml` support = `flake8p`
+`ruff`
+
+Actually, below `ruff` configuration (`select`) includes security and some code
+formatting.
 
 ```shell
-pipenv install Flake8-pyproject --dev
+pipenv install ruff --dev --pre
 ```
 
 `pyproject.toml`
 
 ```toml
-[tool.flake8]
-max-line-length = 100
-ignore = ["E203", "E266", "E501", "W503"]
-max-complexity = 18
-select = ["B", "C", "E", "F", "W", "T4"]
+[tool.ruff]
+fix = true
+select = [
+    "A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN",
+    "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP",
+    "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE",
+    "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT",
+]
+ignore = ["D203", "D212", "D400", "D415"]
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".ruff_cache",
+    "build",
+    "dist",
+]
+# Useful for pre-commit: https://beta.ruff.rs/docs/settings/#force-exclude
+force-exclude = true
+# https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#line-length
+line-length = 100
+# Allow unused variables when underscore-prefixed.
+# dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+# Assume Python 3.11 (see `black`)
+target-version = "py311"
+
+[tool.ruff.mccabe]
+max-complexity = 10
+
 ```
 
 ```shell
-pipenv run flake8p .
+pipenv run ruff check .
 ```
 
 ### Type Checking
@@ -104,21 +143,17 @@ pipenv run mypy .
 
 ### Security
 
-`bandit`, `pipenv check`
-
-```shell
-pipenv install bandit[toml] --dev
-```
+`pipenv check`
 
 `pyproject.toml`
 
 ```toml
-[tool.bandit]
-assert_used.skips = "*/tests/*"
+### SECURITY
+
+# NO CONFIGURATION REQUIRED. INCLUDED IN `ruff` (e.g., `bandit`) AND `pipenv check`.
 ```
 
 ```shell
-pipenv run bandit -c pyproject.toml -r .
 pipenv check
 ```
 
@@ -179,13 +214,6 @@ repos:
 
       ### CODE FORMATTING
 
-      - id: isort
-        name: isort
-        stages: [ commit ]
-        language: system
-        entry: pipenv run isort .
-        types: [ python ]
-
       - id: black
         name: black
         stages: [ commit ]
@@ -195,11 +223,11 @@ repos:
 
       ### CODE STYLE ENFORCEMENT
 
-      - id: flake8
-        name: flake8
+      - id: ruff
+        name: ruff
         stages: [ commit ]
         language: system
-        entry: pipenv run flake8p .
+        entry: pipenv run ruff check .
         types: [ python ]
 
       ### TYPE CHECKING
@@ -213,13 +241,6 @@ repos:
         pass_filenames: false
 
       ### SECURITY
-
-      - id: bandit
-        name: bandit
-        stages: [ commit ]
-        language: system
-        entry: pipenv run bandit -c pyproject.toml -r .
-        types: [ python ]
 
       - id: check
         name: check
