@@ -41,14 +41,17 @@ Moreover, install `pyenv` to deal with different Python versions safely.
 The [automated installer](https://github.com/pyenv-win/pyenv-win) is
 recommended and used this way:
 
-Windows PowerShell **Run as Administrator** 
-
 ```shell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope LocalMachine
 Invoke-WebRequest -UseBasicParsing -Uri "https://raw.githubusercontent.com/pyenv-win/pyenv-win/master/pyenv-win/install-pyenv-win.ps1" -OutFile "./install-pyenv-win.ps1"; &"./install-pyenv-win.ps1"
 ```
 
 **Restart your terminal (e.g., Windows PowerShell)!**
+
+Finally, check if pyenv installation went well:
+
+```shell
+pyenv --version
+```
 
 #### Start
 
