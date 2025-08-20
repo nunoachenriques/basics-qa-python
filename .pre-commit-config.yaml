@@ -6,45 +6,36 @@ repos:
 
       - id: black
         name: black
-        stages: [ commit ]
+        stages: [ pre-commit ]
         language: system
-        entry: pipenv run black .
+        entry: uv run black .
         types: [ python ]
 
-      ### CODE STYLE ENFORCEMENT
+      ### CODE STYLE ENFORCEMENT + SECURITY
 
       - id: ruff
         name: ruff
-        stages: [ commit ]
+        stages: [ pre-commit ]
         language: system
-        entry: pipenv run ruff check .
+        entry: uv run ruff check .
         types: [ python ]
 
       ### TYPE CHECKING
 
       - id: mypy
         name: mypy
-        stages: [ commit ]
+        stages: [ pre-commit ]
         language: system
-        entry: pipenv run mypy .
+        entry: uv run mypy .
         types: [ python ]
         pass_filenames: false
-
-      ### SECURITY
-
-      - id: check
-        name: check
-        stages: [ push ]
-        language: system
-        entry: pipenv check
-        types: [ python ]
 
       ### TESTING
 
       - id: pytest
         name: pytest
-        stages: [ push ]
+        stages: [ pre-push ]
         language: system
-        entry: pipenv run pytest
+        entry: uv run pytest
         types: [ python ]
         pass_filenames: false

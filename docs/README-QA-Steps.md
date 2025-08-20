@@ -6,18 +6,11 @@ Moreover, includes the configuration details for the `pyproject.toml` and
 `.pre-commit-config.yaml` files regarding code quality, security, and testing.
 
 ```text
-pipx
+uv (virtual environment and project management)
   |
-  | isolated install
-  v
-pipenv (virtual environment installs)
-  |
-  |-uses-> pyenv
-  |
-  |-uses-> pip
   |                 |-pre-commit-> black -> ruff -> mypy
   |-> pre-commit ---|
-                    |-pre-push-> pipenv check -> pytest + coverage
+                    |-pre-push-> pytest + coverage
 ```
 
 **NOTICE:** Using UNIX shell commands in a Debian GNU/Linux Bash shell.
@@ -38,6 +31,7 @@ may be added at your discretion.
 ```shell
 /**/__pycache__/
 /.idea/
+/.venv/
 /build/
 /dist/
 /*.egg-info/
@@ -48,7 +42,7 @@ may be added at your discretion.
 `black`
 
 ```shell
-pipenv install black --dev
+uv add black --dev
 ```
 
 `pyproject.toml`
@@ -69,7 +63,7 @@ extend-exclude = '''
 ```
 
 ```shell
-pipenv run black .
+uv run black .
 ```
 
 ### Code Style Enforcement
@@ -80,7 +74,7 @@ Actually, below `ruff` configuration (`select`) includes security and some code
 formatting.
 
 ```shell
-pipenv install ruff --dev --pre
+uv add ruff --dev
 ```
 
 `pyproject.toml`
@@ -88,13 +82,6 @@ pipenv install ruff --dev --pre
 ```toml
 [tool.ruff]
 fix = true
-select = [
-    "A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN",
-    "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP",
-    "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE",
-    "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT",
-]
-ignore = ["D203", "D212", "D400", "D415"]
 exclude = [
     ".git",
     ".mypy_cache",
@@ -112,13 +99,19 @@ line-length = 100
 # Assume Python 3.11 (see `black`)
 target-version = "py311"
 
-[tool.ruff.mccabe]
-max-complexity = 10
-
+[tool.ruff.lint]
+select = [
+    "A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN",
+    "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP",
+    "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE",
+    "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT",
+]
+ignore = ["D203", "D212", "D400", "D415"]
+mccabe.max-complexity = 10
 ```
 
 ```shell
-pipenv run ruff check .
+uv run ruff check .
 ```
 
 ### Type Checking
@@ -126,7 +119,7 @@ pipenv run ruff check .
 `mypy`
 
 ```shell
-pipenv install mypy --dev
+uv add mypy --dev
 ```
 
 `pyproject.toml`
@@ -138,23 +131,17 @@ ignore_missing_imports = true
 ```
 
 ```shell
-pipenv run mypy .
+uv run mypy .
 ```
 
 ### Security
-
-`pipenv check`
 
 `pyproject.toml`
 
 ```toml
 ### SECURITY
 
-# NO CONFIGURATION REQUIRED. INCLUDED IN `ruff` (e.g., `bandit`) AND `pipenv check`.
-```
-
-```shell
-pipenv check
+# NO CONFIGURATION REQUIRED. INCLUDED IN `ruff` (e.g., `bandit`).
 ```
 
 ### Testing
@@ -162,7 +149,7 @@ pipenv check
 `pytest`, `pytest-cov`
 
 ```shell
-pipenv install pytest pytest-cov --dev
+uv add pytest pytest-cov --dev
 ```
 
 `pyproject.toml`
@@ -187,7 +174,7 @@ exclude_lines = [
 ```
 
 ```shell
-pipenv run pytest
+uv run pytest
 ```
 
 ### Git Hooks
@@ -196,16 +183,16 @@ pipenv run pytest
 
 Putting it all together, i.e., automating while distinguishing Git `commit`
 fast-checking requirement from the Git `push` more time-consuming possible
-actions such as `pytest` (including coverage) and `pipenv check`.
+actions such as `pytest` (including coverage).
 
 ```shell
-pipenv install pre-commit --dev
+uv add pre-commit --dev
 ```
 
 `.pre-commit-config.yaml`
 
-**NOTICE:** The `pipenv check` and the `pytest` (including coverage) are
-configured to run only on Git `push`!
+**NOTICE:** The `pytest` (including coverage) is configured to run only on
+Git `push`!
 
 ```yaml
 repos:
@@ -216,53 +203,44 @@ repos:
 
       - id: black
         name: black
-        stages: [ commit ]
+        stages: [ pre-commit ]
         language: system
-        entry: pipenv run black .
+        entry: uv run black .
         types: [ python ]
 
-      ### CODE STYLE ENFORCEMENT
+      ### CODE STYLE ENFORCEMENT + SECURITY
 
       - id: ruff
         name: ruff
-        stages: [ commit ]
+        stages: [ pre-commit ]
         language: system
-        entry: pipenv run ruff check .
+        entry: uv run ruff check .
         types: [ python ]
 
       ### TYPE CHECKING
 
       - id: mypy
         name: mypy
-        stages: [ commit ]
+        stages: [ pre-commit ]
         language: system
-        entry: pipenv run mypy .
+        entry: uv run mypy .
         types: [ python ]
         pass_filenames: false
-
-      ### SECURITY
-
-      - id: check
-        name: check
-        stages: [ push ]
-        language: system
-        entry: pipenv check
-        types: [ python ]
 
       ### TESTING
 
       - id: pytest
         name: pytest
-        stages: [ push ]
+        stages: [ pre-push ]
         language: system
-        entry: pipenv run pytest
+        entry: uv run pytest
         types: [ python ]
         pass_filenames: false
 ```
 
 ```shell
-pipenv run pre-commit install -t pre-commit
-pipenv run pre-commit install -t pre-push
+uv run pre-commit install -t pre-commit
+uv run pre-commit install -t pre-push
 ```
 
 ## Back to [README Wrap-up](../README.md#wrap-up)

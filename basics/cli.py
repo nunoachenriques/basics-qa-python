@@ -20,8 +20,9 @@ Command-line interface.
 
 import argparse
 import logging
-from pathlib import Path
 from typing import NoReturn
+
+from basics import __version__
 
 # Enable logging.
 logger = logging.getLogger(__name__)
@@ -45,8 +46,7 @@ class Cli:
         """
         self.option1 = None
         self.argument1 = None
-        with Path.open(Path("VERSION")) as f:
-            self.version = f.read()
+        self.version = __version__
 
     def bootstrap(self: "Cli") -> "Cli":
         """
