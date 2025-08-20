@@ -9,11 +9,9 @@
 The basics towards better software with Python by means of development best
 practices. A work in progress with a continuous improvement mindset.
 
-There are some basic system-wide prerequisites such as `python`, `venv`, `pip`,
-and `git`. Next, we will install `pipx` and use this tool to install `pipenv`
-isolated from the general environment. Finally, `pyenv` is installed to assure
-that any Python version requested is available and easily switched to
-(independently of the system Python, it uses a collection of scripts).
+There are some basic system-wide prerequisites such as `curl`, `git`,
+`python` (`dev`, `pip`, `venv`). Finally, `uv` is installed to assure
+a proper project and Python environment management.
 
 **NOTICE:** Using UNIX shell commands in a Debian GNU/Linux Bash shell.
 Adapt accordingly your Operating System.
@@ -80,9 +78,9 @@ by one of two options:
  
    ```shell
    cd basics-qa-python
-   pipenv install --dev
-   pipenv run pre-commit install -t pre-commit
-   pipenv run pre-commit install -t pre-push
+   uv sync --dev
+   uv run pre-commit install -t pre-commit
+   uv run pre-commit install -t pre-push
    ```
    
    **Third**, carry on coding, committing, and issuing pull requests to the main
@@ -98,10 +96,10 @@ by one of two options:
    ```shell
    mv basics-qa-python YOUR-OWN-PROJECT-NAME
    cd YOUR-OWN-PROJECT-NAME
-   pipenv install --dev
+   uv sync --dev
    git init
-   pipenv run pre-commit install -t pre-commit
-   pipenv run pre-commit install -t pre-push
+   uv run pre-commit install -t pre-commit
+   uv run pre-commit install -t pre-push
    ```
 
    **Third**, custom everything you see fit (NOTICE: change basics-qa-python
@@ -117,8 +115,8 @@ How to test the `.pre-commit-config.yaml` calls and also the configuration in
 `pyproject.toml`:
 
 ```shell
-pipenv run pre-commit run --all-files --hook-stage commit
-pipenv run pre-commit run --all-files --hook-stage push
+uv run pre-commit run --all-files --hook-stage pre-commit
+uv run pre-commit run --all-files --hook-stage pre-push
 ```
 
 ### Run
@@ -126,7 +124,7 @@ pipenv run pre-commit run --all-files --hook-stage push
 A command-line interface is available and ready to run the application:
 
 ```shell
-pipenv run python app_cli.py
+uv run python app_cli.py
 ```
 
 ## History
