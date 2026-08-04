@@ -33,6 +33,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 import tomllib
 from pathlib import Path
 
@@ -400,6 +401,34 @@ class TestGeneratedProjectActuallyRuns:
         assert "nunoachenriques" not in pyproject
         assert "alex.mf.alm" not in pyproject
 
+    def test_it_does_not_claim_the_template_authors_copyright(self, project: Path) -> None:
+        """A new project whose README says somebody else owns it is simply wrong."""
+        # The source files keep the template's notice, and must: the Apache
+        # licence requires a derivative work to retain it. The README is a
+        # different thing - it describes THIS project - and it used to say
+        # the whole of it was copyright the template's author, while the
+        # pyproject.toml two directories away said "Your Name".
+        readme = (project / "README.md").read_text(encoding="utf-8")
+        assert "Copyright 2022 Nuno A. C. Henriques https://" not in readme
+        assert "Your Name" in readme
+        # The attribution the licence does require is still there.
+        assert "Nuno A. C. Henriques" in readme
+
+    def test_the_source_headers_keep_the_original_notice(self, project: Path) -> None:
+        """Stripping them would be the actual licence violation."""
+        header = (project / to_package_name("web-api") / "cli.py").read_text(encoding="utf-8")
+        assert "Copyright 2022 Nuno A. C. Henriques" in header
+
+    def test_it_does_not_inherit_the_template_history(self, project: Path) -> None:
+        """The template's origin story is not the new project's."""
+        readme = (project / "README.md").read_text(encoding="utf-8")
+        assert "## History" not in readme
+        # That section also carried the one place "basics" appeared as an
+        # ordinary English word rather than as the package name, so renaming
+        # turned it into "compile some web_api of quality assurance".
+        assert "of quality assurance" not in readme
+        assert "](#history)" not in readme, "the contents list still links to it"
+
     def test_no_stray_coverage_data_is_copied(self, project: Path) -> None:
         """Coverage writes .coverage.<host>.<pid>.<random>, which a plain name misses."""
         assert not list(project.glob(".coverage*"))
@@ -616,6 +645,32 @@ class TestTheEnvironmentIsPinnedConsistently:
         project = self.pyproject()["project"]
         assert isinstance(project, dict)
         assert project["dependencies"] == []
+
+
+class TestOnboardingStaysQuick:
+    """
+    The first command has to feel instant, and nothing else guards that.
+
+    Every gate here measures correctness. None measures the thing somebody
+    actually experiences first, which is how long they wait after typing
+    the command out of the README - and that degrades one carried file at
+    a time, invisibly, until the template feels heavy.
+    """
+
+    #: Generous by an order of magnitude. This is not a benchmark; it is a
+    #: tripwire for somebody adding a large file to the template and not
+    #: noticing that every generated project now carries it.
+    BUDGET_SECONDS = 15.0
+
+    def test_generating_a_project_is_not_slow(self, tmp_path: Path) -> None:
+        """Copy and rename only - no environment, so no network and no cache."""
+        started = time.monotonic()
+        create_project("budget-app", tmp_path / "budget-app", TEMPLATE_ROOT, install=False)
+        elapsed = time.monotonic() - started
+        assert elapsed < self.BUDGET_SECONDS, (
+            f"generating a project took {elapsed:.1f}s, over the {self.BUDGET_SECONDS}s "
+            "budget: something large is being carried into every new project"
+        )
 
 
 class TestTheRepositoryIsSafeToCloneTwice:

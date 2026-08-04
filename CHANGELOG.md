@@ -19,6 +19,16 @@ time, so they are summaries rather than a contemporaneous record.
   test read the configuration and checked what it said; none had ever
   installed a hook or made a commit, so nothing proved the push stage
   existed outside a line of YAML.
+- The published bill of materials is checked before it is uploaded. It
+  was generated and published without anything ever looking at it, so an
+  empty or malformed document would have been found by whoever needed it
+  mid-incident. Structural rather than a schema fetch, which fails behind
+  a TLS-intercepting proxy.
+- A budget on how long generating a project takes, as a tripwire for
+  somebody carrying a large file into the template and so into every
+  project made from it.
+- A fifteen-minute manual acceptance script in the quality guide, for the
+  defects no test reports: a correct instruction that is confusing.
 - Pipeline linting with `zizmor` and `check-jsonschema`, in a `pipeline`
   dependency group. The pipeline definitions were the one part of the
   repository nothing checked, and both tools found real problems on their
@@ -146,6 +156,19 @@ time, so they are summaries rather than a contemporaneous record.
 
 ### Fixed
 
+- A generated project's `README.md` no longer claims the template
+  author's copyright over the whole of it, while its own
+  `pyproject.toml` two lines away said `Your Name`. It now carries its
+  own copyright and the attribution the Apache licence does require. The
+  notices at the top of each source file stay exactly as they were —
+  that licence requires a derivative work to retain them, and removing
+  them would be the actual violation.
+- Generated projects no longer inherit the template's `History` section,
+  which told the new project's readers about somebody else's 2022. That
+  section also held the one place `basics` appeared as an ordinary
+  English word rather than as the package name, so renaming turned
+  "compile some basics of quality assurance" into "compile some
+  `my_new_project` of quality assurance".
 - The GitLab coverage regex no longer escapes its `%`. GitLab parses that
   pattern with RE2, where `\%` is not a valid escape at all, so the
   coverage figure risked never being reported — and a number quietly

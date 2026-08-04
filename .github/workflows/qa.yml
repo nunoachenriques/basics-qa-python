@@ -158,6 +158,30 @@ jobs:
       - name: Generate the software bill of materials
         run: uv run pip-audit --format cyclonedx-json -o sbom.cyclonedx.json
 
+      - name: Check the bill of materials is a real one
+        # It was generated and published without anything ever looking at
+        # it. An empty or malformed document would be uploaded just as
+        # happily, and only discovered by whoever needed it during an
+        # incident - which is the worst moment to find out.
+        #
+        # Structural, not a schema fetch: pulling the CycloneDX schema over
+        # the network fails behind a TLS-intercepting corporate proxy, which
+        # is exactly why malware checking is not enabled project-wide either.
+        run: |
+          uv run python - <<'PY'
+          import json
+          from pathlib import Path
+
+          bom = json.loads(Path("sbom.cyclonedx.json").read_text(encoding="utf-8"))
+          if bom.get("bomFormat") != "CycloneDX":
+              raise SystemExit(f"not a CycloneDX document: {bom.get('bomFormat')!r}")
+          if not bom.get("specVersion"):
+              raise SystemExit("no specVersion")
+          if not bom.get("components"):
+              raise SystemExit("no components listed")
+          print(f"CycloneDX {bom['specVersion']}, {len(bom['components'])} components")
+          PY
+
       - name: Publish the bill of materials
         uses: actions/upload-artifact@v4
         with:

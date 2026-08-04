@@ -108,6 +108,16 @@ sbom:
     # rather than days when the next advisory lands. CycloneDX comes from
     # pip-audit, which is already a dependency, so this costs nothing extra.
     - uv run pip-audit --format cyclonedx-json -o sbom.cyclonedx.json
+    # Look at what was just produced. It was published without anything
+    # ever checking it, so an empty or malformed document would be uploaded
+    # just as happily and found by whoever needed it mid-incident.
+    - >
+      uv run python -c "import json,pathlib;
+      b=json.loads(pathlib.Path('sbom.cyclonedx.json').read_text(encoding='utf-8'));
+      assert b.get('bomFormat')=='CycloneDX', b.get('bomFormat');
+      assert b.get('specVersion'), 'no specVersion';
+      assert b.get('components'), 'no components';
+      print('CycloneDX', b['specVersion'], len(b['components']), 'components')"
     # The fully resolved, hash-pinned dependency set, for reproducing an
     # exact environment months later.
     - uv export --format requirements-txt --all-groups > requirements.lock.txt

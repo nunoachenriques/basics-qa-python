@@ -479,6 +479,36 @@ pattern `.coverage.*` is listed alongside the plain name. Hypothesis's
 from a generated project, so a new project never starts life holding another
 project's cached state.
 
+<!-- template-only:start -->
+## Acceptance, by hand, once per release
+
+Everything above is automated, and automation cannot tell you that a correct
+instruction is a confusing one. This takes about fifteen minutes and is worth
+doing before tagging a release.
+
+Use a machine that has never seen this project — Windows Sandbox, a fresh
+container, a borrowed laptop. The point is to have no cache, no `uv` already
+on `PATH`, and no memory of what the commands do.
+
+1. Follow the platform guide for that operating system, **copy-paste only**.
+   Do not fix anything silently. If you reach for knowledge that is not on
+   the page, that is the finding.
+2. `git clone`, then `uv run python qa.py setup`, then
+   `uv run python qa.py check`. Note the wall-clock time to the first green
+   run.
+3. `uv run python new_project.py my-new-project`, then `cd ../my-new-project`
+   and `uv run python qa.py check`. It must be green without touching
+   anything.
+4. In the new project, make a deliberately unformatted change and commit it.
+   The commit must be refused, and the message must say why.
+5. Read the generated `README.md` as though you had never seen the template.
+   Does it describe *your* project, or somebody else's?
+
+Write down every moment of hesitation, not just the failures. "I did not know
+which terminal to use" is a defect in the documentation exactly as much as a
+command that errors, and it is the only kind no test will ever report.
+<!-- template-only:end -->
+
 ## Next
 
 Back to [Get started](../README.md#get-started).

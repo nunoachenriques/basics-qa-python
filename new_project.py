@@ -31,6 +31,7 @@ import re
 import shutil
 import subprocess
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import NoReturn
 
@@ -105,6 +106,26 @@ FRESH_AUTHORS = """authors = [
   {name = "Your Name", email = "you@example.com"},
 ]
 """
+
+#: The template's copyright line, at the top of every source file and once
+#: more in the README's licence section.
+TEMPLATE_COPYRIGHT = "Copyright 2022 Nuno A. C. Henriques https://nunoachenriques.net"
+
+#: What replaces it in a generated project's README, and ONLY there.
+#:
+#: The notices in the source files stay exactly as they are: the Apache
+#: licence requires a derivative work to keep them, and stripping them
+#: would be the actual violation. The README is different - it describes
+#: the new project, and saying that project's copyright belongs to
+#: somebody else is simply untrue. The template is not named here because
+#: nothing generated may carry the template's name; ``CHANGELOG.md``
+#: records which template this came from, and is exempt for that reason.
+FRESH_COPYRIGHT = """Copyright {year} Your Name
+
+Generated from a project template, Copyright 2022 Nuno A. C. Henriques,
+and licensed the same way. The notice at the top of each source file is
+the template's; the Apache licence requires a derivative work to keep it,
+so leave it in place and add your own beside it as you rewrite a file."""
 
 #: Marks the part of the README that only makes sense in the template, and
 #: is removed from a generated project. A generated project does not ship
@@ -463,6 +484,7 @@ def reset_project_metadata(destination: Path, project_name: str) -> None:
     reset_lock_version(destination, project_name)
     (destination / "CHANGELOG.md").write_text(FRESH_CHANGELOG, encoding="utf-8", newline="\n")
     strip_template_only_sections(destination)
+    reset_readme_copyright(destination)
     logger.info("Reset %s to version %s", project_name, INITIAL_VERSION)
 
 
@@ -509,6 +531,27 @@ def strip_template_only_sections(destination: Path) -> None:
             continue
         text = document.read_text(encoding="utf-8")
         document.write_text(README_TEMPLATE_ONLY.sub("", text), encoding="utf-8", newline="\n")
+
+
+def reset_readme_copyright(destination: Path) -> None:
+    """
+    Give the generated project's README its own copyright line.
+
+    Only the README. Every source file keeps the template's notice, which
+    the Apache licence requires a derivative work to retain, and which the
+    replacement text explains rather than leaving as a mystery.
+
+    Runs after the renaming pass, so the attribution written here cannot
+    itself be rewritten.
+
+    :param destination: The generated project root.
+    """
+    readme = destination / "README.md"
+    if not readme.is_file():  # pragma: no cover - the template always ships one
+        return
+    text = readme.read_text(encoding="utf-8")
+    fresh = FRESH_COPYRIGHT.format(year=datetime.now(UTC).year)
+    readme.write_text(text.replace(TEMPLATE_COPYRIGHT, fresh, 1), encoding="utf-8", newline="\n")
 
 
 def run(command: list[str], cwd: Path) -> bool:

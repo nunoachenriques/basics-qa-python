@@ -27,7 +27,9 @@ you.
 * [Install the prerequisites](#install-the-prerequisites)
 * [Contributing](CONTRIBUTING.md)
 * [Changelog](CHANGELOG.md)
+<!-- template-only:start -->
 * [History](#history)
+<!-- template-only:end -->
 * [License](#license)
 
 ## Get started
@@ -203,6 +205,7 @@ If `uv --version` reports that the command is not found, the installer
 finished but your shell has not picked it up yet. Open a new terminal and try
 again.
 
+<!-- template-only:start -->
 ## History
 
 It started in 2022 with an urge to compile some basics of quality assurance
@@ -212,6 +215,7 @@ automate, and guarantee a proper normalised and more secure code.
 By me [Nuno A. C. Henriques](https://github.com/nunoachenriques) and by
 [Alexandre Almeida](https://github.com/alexandre1-almeida)'s precious
 contributions in code and vivid discussions!
+<!-- template-only:end -->
 
 ## License
 
