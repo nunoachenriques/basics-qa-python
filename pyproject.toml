@@ -13,53 +13,105 @@ maintainers = [
   {name = "Nuno A. C. Henriques", email = "nunoachenriques@gmail.com"},
 ]
 requires-python = ">=3.11"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Typing :: Typed",
+]
 dependencies = [
 ]
 
+[project.urls]
+Homepage = "https://github.com/nunoachenriques/basics-qa-python"
+Repository = "https://github.com/nunoachenriques/basics-qa-python"
+Changelog = "https://github.com/nunoachenriques/basics-qa-python/blob/main/CHANGELOG.md"
+
+[project.scripts]
+# Installing the project puts this on PATH: `uv run basics-qa ARGUMENT1`.
+basics-qa = "basics.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# The distribution is "basics-qa-python" but the import package is "basics";
+# hatchling cannot infer that mapping on its own.
+packages = ["basics"]
+
 [dependency-groups]
 dev = [
-    "black>=25.1.0",
     "mypy>=1.17.1",
+    "pip-audit>=2.7.3",
     "pre-commit>=4.3.0",
-    "pytest>=8.4.1",
-    "pytest-cov>=6.2.1",
-    "ruff>=0.12.9",
+    "pytest>=9.0.3",
+    "pytest-cov>=6.2.1,<7",  # 7.x changed subprocess coverage measurement; see commit message
+    "ruff>=0.12.9,<0.13",  # pre-1.0: minor bumps can add newly-enabled rules
 ]
 
-### CODE FORMATTING
+[tool.uv]
+# DEPENDENCY COOLDOWN. Ignore any release published in the last 7 days.
+# Most malicious package uploads are detected and yanked within 24-48
+# hours, so a short cooldown removes the window in which a compromised
+# release would be installed - at the cost of adopting new versions a week
+# late, which is almost never urgent. Override deliberately when it is:
+#   uv lock --exclude-newer "0 days"
+exclude-newer = "7 days"
 
-[tool.black]
-# https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#line-length
-line-length = 100
-# Assume Python 3.11 (see `ruff`)
-target-version = ['py311']
-extend-exclude = '''
-(
-  ^/notebooks
-  | ^/.pytest_cache
-  | ^/.ruff_cache
-)
-'''
+# Transitive dependencies pulled in by the tools above, pinned to the
+# lowest version WITHOUT a known published vulnerability (per pip-audit).
+# We do not use these packages directly; this only constrains what the
+# resolver is allowed to pick for them.
+constraint-dependencies = [
+    "filelock>=3.20.3",
+    "pygments>=2.20.0",
+    "virtualenv>=20.36.1",
+]
 
-### CODE STYLE ENFORCEMENT
+# NOTE: malware checking is deliberately NOT enabled here. Setting
+# [tool.uv.audit] malware-check = true makes EVERY `uv sync` contact OSV and
+# hard-fail when it cannot be reached - which breaks offline work and any
+# network that intercepts TLS, as many corporate proxies do. It is enabled
+# in CI instead, via UV_MALWARE_CHECK=1, where the network is dependable
+# and a failure is a signal rather than an obstacle.
+
+### CODE FORMATTING + STYLE ENFORCEMENT
+#
+# ruff provides both: `ruff format` replaces black (same line-length and
+# target-version, one tool instead of two), `ruff check` covers linting.
 
 [tool.ruff]
-fix = true
+# fix is intentionally NOT set to true here: that made a plain, manual
+# `ruff check .` silently rewrite files on disk, which is surprising for a
+# command whose name reads as "inspect". Auto-fix is instead opted into
+# explicitly where it is wanted, in the pre-commit hook's own entry
+# command (see .pre-commit-config.yaml) - CI always runs with --no-fix.
+# NOTE: `exclude` REPLACES ruff's built-in defaults (which include .venv),
+# it does not add to them. Without .venv listed here, ruff only avoids the
+# virtual environment because `respect-gitignore` happens to catch it - so
+# outside a git checkout it would lint every installed dependency.
 exclude = [
     ".git",
+    ".venv",
     ".mypy_cache",
     ".pytest_cache",
     ".ruff_cache",
     "build",
     "dist",
 ]
-# Useful for pre-commit: https://beta.ruff.rs/docs/settings/#force-exclude
+# Useful for pre-commit: https://docs.astral.sh/ruff/settings/#force-exclude
 force-exclude = true
-# https://black.readthedocs.io/en/stable/the_black_code_style/current_style.html#line-length
+# https://docs.astral.sh/ruff/settings/#line-length
 line-length = 100
 # Allow unused variables when underscore-prefixed.
 # dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-# Assume Python 3.11 (see `black`)
+# Oldest supported interpreter (keep in sync with requires-python).
 target-version = "py311"
 
 [tool.ruff.lint]
@@ -67,27 +119,72 @@ select = [
     "A", "B", "C", "D", "E", "F", "G", "I", "N", "Q", "S", "T", "W", "ANN",
     "ARG", "BLE", "COM", "DJ", "DTZ", "EM", "ERA", "EXE", "FBT", "ICN", "INP",
     "ISC", "NPY", "PD", "PGH", "PIE", "PL", "PT", "PTH", "PYI", "RET", "RSE",
-    "RUF", "SIM", "SLF", "TCH", "TID", "TRY", "UP", "YTT",
+    "RUF", "SIM", "SLF", "TC", "TID", "TRY", "UP", "YTT",
+    "ASYNC", "FA", "FURB", "INT", "LOG", "PERF", "SLOT",
 ]
-ignore = ["D203", "D212", "D400", "D415"]
+# D203/D212: pydocstyle rules ruff itself reports as incompatible with
+# their own siblings (D211/D213), naming them in a warning at startup. One
+# side of each pair must be off, and these are the sides this codebase does
+# not follow: it writes no blank line before a class, and puts the summary
+# on the second line.
+# D400/D415 are NOT here, and deliberately so. They are convention
+# alternatives rather than a conflicting pair - ruff runs both together
+# without complaint - so ignoring both left nothing at all enforcing that a
+# docstring summary ends in punctuation, and quietly hid nine real
+# violations.
+# COM812: the formatter already owns trailing commas; the two conflict
+# when both are enabled, per ruff's own warning.
+ignore = ["D203", "D212", "COM812"]
 mccabe.max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+# S101: tests SHOULD use bare `assert` - it is pytest's core feature, and
+# assertions are never stripped from test runs the way `python -O` would.
+"tests/**" = ["S101"]
 
 ### TYPE CHECKING
 
 [tool.mypy]
+# The codebase already satisfies --strict; setting it here stops that from
+# silently regressing as new, unannotated code is added.
+strict = true
 files = "."
 ignore_missing_imports = true
 
 ### SECURITY
 
-# NO CONFIGURATION REQUIRED. INCLUDED IN `ruff` (e.g., `bandit`) AND `pipenv check`.
+# Two different concerns, covered by two different tools:
+#  - Insecure patterns in OUR OWN code: `ruff` S rules (bandit). No extra
+#    configuration required, already part of [tool.ruff.lint] select above.
+#  - Known vulnerabilities in DEPENDENCIES we install: `pip-audit`, checked
+#    against the Python Packaging Advisory Database. Run it with:
+#      uv run pip-audit
+#    (also run in CI - see .github/workflows/qa.yml)
 
 ### TESTING
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-fail-under=100"
+# --strict-markers: an unregistered (or mistyped) marker is an error, not a
+# silent no-op that quietly deselects nothing.
+addopts = "--cov --cov-fail-under=100 --strict-markers"
+# A warning nobody reads is a deprecation you find out about the hard way.
+# Add targeted "ignore::" entries for third-party noise rather than removing
+# this - see docs/README-QA-Steps.md.
+filterwarnings = ["error"]
+# An xfail that starts passing is a result, not something to pass silently.
+xfail_strict = true
+markers = [
+    # Deselect these with `uv run python qa.py fast`, NOT with a bare
+    # `-m 'not integration'`: they are the only cover for app_cli.py AND for
+    # the verbosity ladder in the cli module, so deselecting them without
+    # also passing --no-cov fails the 100% gate.
+    "integration: end-to-end tests that launch a subprocess; deselect with qa.py fast",
+]
 
 [tool.coverage.run]
+# Line coverage alone reports 100% for `if x:` when only the true path is
+# ever taken. Branch coverage catches the untested path.
+branch = true
 source = ["."]
 
 [tool.coverage.report]
@@ -98,5 +195,8 @@ exclude_lines = [
     "def __repr__",
     "raise AssertionError",
     "raise NotImplementedError",
-    "if __name__ == .__main__.:"
+    "if __name__ == .__main__.:",
+    # ruff's TC rules move type-only imports into this block, which by
+    # design never executes at runtime and therefore cannot be covered.
+    "if TYPE_CHECKING:",
 ]

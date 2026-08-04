@@ -1,0 +1,14 @@
+# Normalise line endings. Without this, Git stores LF while Windows checks
+# out CRLF, and every commit from a Windows machine reports
+# "LF will be replaced by CRLF" for files nobody touched.
+* text=auto eol=lf
+
+# uv.lock is generated; keep diffs out of review by default.
+uv.lock linguist-generated=true
+
+# Binary files must never be normalised.
+*.png binary
+*.jpg binary
+*.gz  binary
+*.zip binary
+*.joblib binary
