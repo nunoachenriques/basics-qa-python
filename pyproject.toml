@@ -63,6 +63,9 @@ dev = [
     "pytest-randomly>=4.1.0",
     "ruff>=0.12.9,<0.13",  # pre-1.0: minor bumps can add newly-enabled rules
 ]
+mutation = [
+    "cosmic-ray>=8.4.6",
+]
 
 [tool.uv]
 # DEPENDENCY COOLDOWN. Ignore any release published in the last 7 days.
@@ -89,6 +92,35 @@ constraint-dependencies = [
 # network that intercepts TLS, as many corporate proxies do. It is enabled
 # in CI instead, via UV_MALWARE_CHECK=1, where the network is dependable
 # and a failure is a signal rather than an obstacle.
+
+### MUTATION TESTING
+
+# Coverage says a line RAN. Mutation testing asks whether any assertion
+# would have NOTICED it changing - the question 100% coverage looks like it
+# answers and does not. mutmut alters the code one small change at a time
+# and re-runs the tests; a mutant the suite still passes is a line nothing
+# is actually checking.
+#
+# Deliberately NOT in the dev group, so `uv sync --dev` never installs it.
+# One test run per mutant is slow by nature, so this belongs in a scheduled
+# pipeline and in the occasional deliberate local run, never in front of a
+# commit:
+#
+#   uv run --group mutation mutmut run
+#   uv run --group mutation mutmut results
+#
+# Only the self-contained modules are mutated. new_project.py is covered by
+# tests that copy the whole repository and run real tools against it, which
+# mutmut cannot reproduce inside the working copy it mutates in.
+
+[tool.mutmut]
+paths_to_mutate = ["qa.py", "basics/"]
+tests_dir = ["tests/"]
+# --no-cov, because the coverage gate would fail every mutant run for
+# reasons having nothing to do with the mutant. -p no:randomly, because a
+# mutant must be the only thing that differs between two runs.
+runner = "python -m pytest -x -q --no-cov -p no:randomly tests/test_qa.py tests/test_cli.py"
+also_copy = ["pyproject.toml", "app_cli.py"]
 
 ### CODE FORMATTING + STYLE ENFORCEMENT
 #
@@ -150,7 +182,11 @@ mccabe.max-complexity = 10
 [tool.ruff.lint.per-file-ignores]
 # S101: tests SHOULD use bare `assert` - it is pytest's core feature, and
 # assertions are never stripped from test runs the way `python -O` would.
-"tests/**" = ["S101"]
+# PLR2004: a test asserting a specific number is the point of the test.
+# Naming 127 as a constant and comparing against that constant is exactly
+# the tautology mutation testing found here: both sides move together and
+# the value goes unchecked.
+"tests/**" = ["S101", "PLR2004"]
 
 ### TYPE CHECKING
 

@@ -132,9 +132,41 @@ class TestRun:
         # does not exist, so this used to end in a traceback naming subprocess
         # internals - telling somebody who has not installed uv nothing about
         # what to install.
-        status = run(("definitely-not-a-real-command",))
+        #
+        # More than one argument, deliberately. With a single-element command
+        # the executable is also the last element, so naming command[-1] read
+        # exactly the same and mutation testing found the test could not tell
+        # them apart. Every real task here looks like ("uv", "run", "pytest"),
+        # where the difference is "uv not found" against "pytest not found" -
+        # the wrong one of which sends somebody to install the wrong thing.
+        status = run(("definitely-not-a-real-command", "an-argument"))
         assert status == COMMAND_NOT_FOUND_STATUS
-        assert "not found" in capsys.readouterr().err
+        assert "definitely-not-a-real-command not found" in capsys.readouterr().err
+
+
+class TestTheExitStatusesAreTheConventionalOnes:
+    """
+    Comparing a constant with itself proves nothing about its value.
+
+    Found by mutation testing. Every other test checks a status by
+    comparing it with the same constant it came from, so changing 127 to
+    128 changed both sides at once and the suite stayed green - a hundred
+    per cent covered and completely indifferent to the number. The numbers
+    are the whole point: each is what a shell already means by that
+    condition, and a script reading our exit status expects exactly it.
+    """
+
+    def test_a_usage_error_exits_the_way_argparse_does(self) -> None:
+        """A usage error exits 2, which is what argparse itself returns."""
+        assert USAGE_ERROR_STATUS == 2
+
+    def test_a_missing_command_exits_the_way_a_shell_reports_one(self) -> None:
+        """127 is "command not found" wherever a shell reports it."""
+        assert COMMAND_NOT_FOUND_STATUS == 127
+
+    def test_an_interrupt_exits_the_way_a_shell_reports_sigint(self) -> None:
+        """128 plus the signal number, and SIGINT is signal 2."""
+        assert INTERRUPTED_STATUS == 130
 
 
 class TestStoppingAndBeingStopped:

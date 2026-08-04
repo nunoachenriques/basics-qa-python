@@ -160,6 +160,22 @@ class TestCli:
         monkeypatch.setattr(sys, "argv", ["app_cli.py", "--", "-x"])
         assert Cli().bootstrap().argument1 == "-x"
 
+    def test_the_logging_format_replaces_one_already_installed(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Without `force=True`, basicConfig does nothing at all once a handler exists."""
+        # Found by mutation testing: flipping force=True to force=False left
+        # every test passing. It is load-bearing - a library, a framework, or
+        # an earlier import may already have configured the root logger, and
+        # without force the format chosen here is silently ignored. It is
+        # also the reason tests/conftest.py has to restore the root handlers.
+        already_there = logging.StreamHandler()
+        logging.getLogger().addHandler(already_there)
+        monkeypatch.setattr(sys, "argv", ["app_cli.py", "ARGUMENT1", "-v"])
+        Cli().bootstrap()
+        assert already_there not in logging.getLogger().handlers
+
     def test_main_entry_point(
         self: "TestCli",
         monkeypatch: pytest.MonkeyPatch,

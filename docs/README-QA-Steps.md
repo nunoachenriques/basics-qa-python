@@ -204,6 +204,71 @@ logging state after every test, because command-line entry points call
 buffer. That fixture is load-bearing, and in a fixed order a broken one would
 leave the suite green.
 
+### Whether the tests would notice — `cosmic-ray`
+
+Coverage says a line *ran*. It cannot say whether any assertion would have
+*noticed* that line changing, and those are different questions: a test that
+calls everything and asserts nothing scores 100%.
+
+Mutation testing answers the second one. It alters the source one small change
+at a time — `==` to `<`, `127` to `128`, `True` to `False` — and runs the tests
+against each. A mutant the suite still passes is a line nothing is checking.
+
+```shell
+uv run --group mutation cosmic-ray init mutation.toml mutation.sqlite
+uv run --group mutation cosmic-ray exec mutation.toml mutation.sqlite
+uv run --group mutation cr-report --show-diff mutation.sqlite
+```
+
+It is not a gate and not in the `dev` group, so `uv sync --dev` never installs
+it. One test run per mutant is far too slow to sit in front of a commit.
+
+**Verify the harness before believing the score.** Point `test-command` at
+tests that cannot possibly cover the module and run it again: almost every
+mutant must *survive*. If everything is reported killed, the command is failing
+for its own reasons and every "kill" is a lie. That is not a hypothetical — a
+bare `python -m pytest` here resolved to an interpreter outside the project
+with no pytest installed, exited non-zero on every mutant, and produced a
+flawless score that measured nothing whatsoever. The control run is what
+caught it.
+
+It found two real gaps in a suite at 100% branch coverage:
+
+* Every exit status was checked by comparing it with the same constant it came
+  from, so `COMMAND_NOT_FOUND_STATUS = 127` could become `128` and both sides
+  moved together. The numbers are the point — they are what a shell already
+  means — so the tests now assert them literally.
+* `logging.basicConfig(force=True)` could become `force=False` unnoticed, and
+  that argument is load-bearing: without it the format is silently ignored
+  whenever anything else has already configured the root logger.
+
+Scores afterwards: `qa.py` 94%, `basics/` 83%. The survivors are equivalent
+mutants that cannot be killed without contorting the code — the
+`if __name__ == "__main__":` guard, which never runs under pytest, and
+comparisons like `args.v == 0` against `<= 0` where the value is a count and
+can never be negative. A perfect score is not the goal; reading the survivors
+and deciding which are real is.
+
+### Running tests in parallel — measured, and not adopted
+
+`pytest-xdist` was evaluated rather than assumed. On this suite, `-n 4` takes
+about 9 seconds against 17 sequentially, coverage still reports 100%, and three
+consecutive runs were stable. It works.
+
+It is still not installed. The full suite is already 17 seconds and `qa.py
+fast` is about 4, so the saving lands on the run people make least often, in
+exchange for interleaved output that is harder to read when something fails.
+Add it if the suite grows to where that trade changes:
+
+```shell
+uv add --dev pytest-xdist && uv run pytest -n 4
+```
+
+Install it properly rather than reaching for `uv run --with pytest-xdist`. That
+builds an ephemeral environment and points `sys.executable` at it, so the tests
+that launch subprocesses fail confusingly and coverage collapses to nonsense —
+an artefact of the shortcut, not a finding about xdist.
+
 ### Security — `ruff` and `pip-audit`
 
 Two different concerns needing two different tools:

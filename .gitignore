@@ -18,6 +18,9 @@ coverage.xml
 # next run, so a failure found once keeps being checked. It is a local cache
 # rebuilt from the tests themselves, not something to share through Git.
 /.hypothesis/
+# cosmic-ray's session database, rebuilt by `cosmic-ray init` every time.
+/mutation.sqlite
+/*.sqlite
 # uv's cache, when a pipeline is told to keep it inside the project so it
 # can be cached between runs (see .gitlab-ci.yml).
 /.uv-cache/

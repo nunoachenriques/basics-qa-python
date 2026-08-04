@@ -13,6 +13,15 @@ time, so they are summaries rather than a contemporaneous record.
 
 ### Added
 
+- Mutation testing with `cosmic-ray`, in a `mutation` dependency group of
+  its own so `uv sync --dev` never installs it and generated projects
+  carry the configuration at no cost. Coverage says a line ran; this asks
+  whether any assertion would have noticed it changing. It found two real
+  gaps behind 100% branch coverage — every exit status compared against
+  the constant it came from, so the value itself went unchecked, and
+  `logging.basicConfig(force=True)` able to become `force=False`
+  unnoticed. `qa.py` now scores 94% and `basics/` 83%, the remainder
+  being equivalent mutants recorded in `docs/README-QA-Steps.md`.
 - `tests/test_release.py`: the facts that must agree across files nobody
   edits together — the version in `pyproject.toml`, in `uv.lock`, and the
   one the package reports — plus what the built wheel actually contains
