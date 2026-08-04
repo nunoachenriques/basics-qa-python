@@ -315,6 +315,19 @@ def validate_destination(destination: Path, template_root: Path) -> None:
             "--into unset to create it alongside the template instead."
         )
         raise ProjectError(msg)
+    parent = destination.parent
+    if parent.exists() and not parent.is_dir():
+        # Checked here rather than left to copytree, which fails with "the
+        # system cannot find the path specified" naming a path that plainly
+        # exists - and which the handler in copy_template then blames on the
+        # Windows 260-character limit, sending somebody off to shorten a
+        # name that was never the problem.
+        msg = (
+            f"{parent} is a file, not a directory, so nothing can be created "
+            "inside it. Pass --into a directory, or leave it unset to create "
+            "the project alongside the template."
+        )
+        raise ProjectError(msg)
 
 
 def is_excluded(path: Path, root: Path) -> bool:
@@ -350,6 +363,16 @@ def copy_template(template_root: Path, destination: Path) -> None:
                 name for name in names if is_excluded(Path(directory) / name, template_root)
             },
         )
+    except PermissionError as error:
+        # Before the generic handler below, which it would otherwise reach:
+        # PermissionError is an OSError, and being told to shorten a name
+        # helps nobody whose only problem is where they are allowed to write.
+        msg = (
+            f"Could not create {destination} ({error}). Nothing may be "
+            "written there. Choose somewhere you own with --into, or grant "
+            "yourself write access to that directory first."
+        )
+        raise ProjectError(msg) from error
     except OSError as error:
         # Long destinations are the common case on Windows, where the path
         # limit is 260 characters and the failure arrives as a bare "cannot

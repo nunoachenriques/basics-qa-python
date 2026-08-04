@@ -141,7 +141,8 @@ option. `qa.py` groups them under names so you need not remember them:
 
 `check` runs everything in the same order as continuous integration, cheapest
 first, and stops at the first failure so the message that matters stays on
-screen.
+screen. Ctrl-C stops it with one line and the exit status a shell uses for an
+interruption, rather than a traceback that reads like a crash.
 
 Use `qa.py fast` rather than deselecting the slow tests by hand. They are the
 only cover for some of the code, so skipping them without also turning off the

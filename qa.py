@@ -34,6 +34,10 @@ USAGE_ERROR_STATUS = 2
 #: Exit status for a command that is not installed, as a shell reports it.
 COMMAND_NOT_FOUND_STATUS = 127
 
+#: Exit status for a run stopped with Ctrl-C, as a shell reports it: 128
+#: plus the number of the signal, and SIGINT is 2.
+INTERRUPTED_STATUS = 130
+
 
 class Task(NamedTuple):
     """A named group of commands, run in order until one fails."""
@@ -144,6 +148,13 @@ def run(command: tuple[str, ...]) -> int:
     sys.stdout.flush()
     try:
         return subprocess.run(command, check=False).returncode  # noqa: S603
+    except KeyboardInterrupt:
+        # Ctrl-C reaches the child as well, so by the time this is caught the
+        # gate has already stopped. Saying so in one line beats ending a
+        # deliberate interruption with a traceback through subprocess
+        # internals, which reads like a crash and is not one.
+        sys.stderr.write("\ninterrupted\n")
+        return INTERRUPTED_STATUS
     except FileNotFoundError:
         # This is the first command a new contributor runs, and `uv` missing
         # from PATH is the most likely reason it fails. A traceback naming

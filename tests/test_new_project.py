@@ -158,6 +158,69 @@ class TestRewrite:
         assert rewrite('"basics-qa-python"', "my-app") == '"my-app"'
 
 
+class TestHostileDestinations:
+    """
+    Where a project lands is typed by hand, so it arrives however it arrives.
+
+    Each of these used to end in a traceback, a wrong explanation, or a
+    half-built directory - all of them worse than a refusal that says what
+    the matter is.
+    """
+
+    def test_refuses_a_parent_that_is_a_file(self, tmp_path: Path) -> None:
+        """`--into notes.txt` blamed the Windows path limit, which was a lie."""
+        parent = tmp_path / "notes.txt"
+        parent.write_text("not a directory", encoding="utf-8")
+        with pytest.raises(ProjectError, match="is a file, not a directory"):
+            create_project("my-app", parent / "my-app", TEMPLATE_ROOT, install=False)
+
+    def test_creates_a_parent_that_does_not_exist_yet(self, tmp_path: Path) -> None:
+        """`--into ~/work/2026` should not require making the directory first."""
+        destination = tmp_path / "does" / "not" / "exist" / "my-app"
+        created, _failures = create_project("my-app", destination, TEMPLATE_ROOT, install=False)
+        assert (created / "my_app").is_dir()
+
+    def test_survives_spaces_and_accents_in_the_path(self, tmp_path: Path) -> None:
+        """A corporate home directory is full of both, and rarely by choice."""
+        # "Documents - Company Name", "Ação", "Área de Trabalho": the path a
+        # real developer generates into is nothing like a test fixture.
+        parent = tmp_path / "Os Meus Projectos - Ação"
+        parent.mkdir()
+        created, _failures = create_project(
+            "my-app",
+            parent / "my-app",
+            TEMPLATE_ROOT,
+            install=False,
+        )
+        assert (created / "my_app" / "cli.py").is_file()
+        assert "Ação" in str(created)
+
+    def test_a_permission_failure_says_so_rather_than_blaming_the_path(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        tmp_path: Path,
+    ) -> None:
+        """Being told to shorten a name helps nobody who simply cannot write there."""
+
+        def refuse(*_args: object, **_kwargs: object) -> None:
+            raise PermissionError(13, "Permission denied")
+
+        monkeypatch.setattr(shutil, "copytree", refuse)
+        with pytest.raises(ProjectError, match="Nothing may be written there"):
+            copy_template(TEMPLATE_ROOT, tmp_path / "my-app")
+
+    def test_refuses_a_destination_that_already_exists_whatever_its_case(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Windows and macOS match names without regard to case; Linux does not."""
+        (tmp_path / "My-App").mkdir()
+        if not (tmp_path / "my-app").exists():
+            pytest.skip("this filesystem distinguishes case, so there is no collision")
+        with pytest.raises(ProjectError, match="already exists"):
+            create_project("my-app", tmp_path / "my-app", TEMPLATE_ROOT, install=False)
+
+
 class TestPropertiesThatMustAlwaysHold:
     """
     Rules that hold for every input, not only the ones we thought of.

@@ -184,6 +184,17 @@ class TestWhereTheProjectLands:
         """`--into ~/work` is documented and must keep working."""
         validate_destination(tmp_path / "my-new-project", TEMPLATE_ROOT)
 
+    def test_refuses_a_symlink_that_leads_back_into_the_template(self, tmp_path: Path) -> None:
+        """A path can point inside the template without looking as though it does."""
+        link = tmp_path / "shortcut"
+        try:
+            link.symlink_to(TEMPLATE_ROOT, target_is_directory=True)
+        except (OSError, NotImplementedError):
+            # Windows needs Developer Mode or elevation to create one.
+            pytest.skip("this platform does not permit creating a symlink here")
+        with pytest.raises(ProjectError, match="inside the template"):
+            validate_destination(link / "nested-app", TEMPLATE_ROOT)
+
     def test_nothing_is_written_when_the_destination_is_refused(self) -> None:
         """Refusing after copying would leave the very mess this prevents."""
         destination = TEMPLATE_ROOT / "nested-app"

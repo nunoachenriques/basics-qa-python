@@ -19,6 +19,7 @@ Test ``cli`` module.
 This is an integration test.
 """
 
+import logging
 import subprocess
 import sys
 
@@ -126,6 +127,38 @@ class TestCli:
         printed = capsys.readouterr().out
         assert "app_cli.py" not in printed
         assert "basics-qa -v argument1" in printed
+
+    def test_version_prints_the_version_and_nothing_else(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Anything else printed alongside it breaks whoever parses the output."""
+        # `--version` is what a script or a package manager reads to find out
+        # what is installed, so a friendly prefix would be a breaking change.
+        monkeypatch.setattr(sys, "argv", ["app_cli.py", "--version"])
+        with pytest.raises(SystemExit):
+            Cli().bootstrap()
+        assert capsys.readouterr().out == f"{__version__}\n"
+
+    def test_a_third_v_is_still_debug(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """`-vvv` is what people type when they want more; it must not fall over."""
+        monkeypatch.setattr(sys, "argv", ["app_cli.py", "ARGUMENT1", "-vvv"])
+        Cli().bootstrap()
+        # The package logger, which is where bootstrap sets the level, derived
+        # from the class rather than named, so that renaming cannot miss it.
+        assert logging.getLogger(Cli.__module__.partition(".")[0]).level == logging.DEBUG
+
+    def test_a_double_dash_allows_an_argument_that_looks_like_an_option(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Without `--`, argparse reads a leading dash as a flag it does not have."""
+        monkeypatch.setattr(sys, "argv", ["app_cli.py", "--", "-x"])
+        assert Cli().bootstrap().argument1 == "-x"
 
     def test_main_entry_point(
         self: "TestCli",

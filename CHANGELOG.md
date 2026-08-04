@@ -13,6 +13,17 @@ time, so they are summaries rather than a contemporaneous record.
 
 ### Added
 
+- `tests/test_release.py`: the facts that must agree across files nobody
+  edits together — the version in `pyproject.toml`, in `uv.lock`, and the
+  one the package reports — plus what the built wheel actually contains
+  and a size budget that catches a stray coverage database or wheel
+  committed by accident. It ships into generated projects, which need the
+  same checks.
+- Tests for the edges that arrive from a shell rather than from a test:
+  `--into` naming a file, a parent directory that does not exist yet, a
+  path full of spaces and accents, a case-insensitive collision, a
+  destination reached through a symlink, `-vvv`, an argument that looks
+  like an option, and a gate killed by a signal.
 - Property-based testing with `hypothesis`. A property states a rule that
   must hold for every input and lets the tool hunt for the input that
   breaks it, which is the class of bug an example-based suite keeps
@@ -116,6 +127,16 @@ time, so they are summaries rather than a contemporaneous record.
 
 ### Fixed
 
+- `--into` naming a file is refused with the reason. It used to reach
+  `copytree`, fail with "the system cannot find the path specified" naming
+  a path that plainly exists, and be reported as the Windows
+  260-character limit — sending somebody off to shorten a name that was
+  never the problem. A directory that cannot be written to now says that
+  too, instead of borrowing the same wrong explanation.
+- Ctrl-C during a gate exits 130 with one line, rather than unwinding
+  through `subprocess` internals as a traceback. An interruption is a
+  deliberate act, and printing a crash for one teaches people to ignore
+  the output.
 - A project name ending in a newline is rejected rather than accepted.
   `$` in a Python regular expression also matches immediately before a
   trailing newline, so `my-app\n` — what a name pasted out of a file

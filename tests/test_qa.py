@@ -20,6 +20,7 @@ Test the ``qa`` task runner.
 
 import shlex
 import string
+import subprocess
 import sys
 
 import pytest
@@ -29,6 +30,7 @@ from hypothesis import strategies as st
 import qa
 from qa import (
     COMMAND_NOT_FOUND_STATUS,
+    INTERRUPTED_STATUS,
     TASKS,
     USAGE_ERROR_STATUS,
     build_parser,
@@ -80,6 +82,10 @@ class TestTasks:
         assert ("uv", "run", "ruff", "check", ".", "--fix") not in TASKS["lint"].commands
         assert ("uv", "run", "ruff", "check", ".", "--fix") in TASKS["fix"].commands
 
+    def test_no_task_name_could_be_mistaken_for_an_option(self) -> None:
+        """A task named `-x` would be unreachable: argparse would read it as a flag."""
+        assert all(not name.startswith("-") for name in TASKS)
+
     def test_fix_repairs_before_it_formats(self) -> None:
         """Ruff recommends the linter first, so its rewrites reach the formatter."""
         commands = list(TASKS["fix"].commands)
@@ -129,6 +135,57 @@ class TestRun:
         status = run(("definitely-not-a-real-command",))
         assert status == COMMAND_NOT_FOUND_STATUS
         assert "not found" in capsys.readouterr().err
+
+
+class TestStoppingAndBeingStopped:
+    """
+    A run that was interrupted, or a tool that was killed, is not a pass.
+
+    Both arrive by a different route from an ordinary non-zero exit, and
+    both used to take that route straight past the reporting.
+    """
+
+    def test_an_interrupt_stops_without_a_traceback(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Ctrl-C is a deliberate act; a traceback makes it look like a crash."""
+
+        def interrupt(*_args: object, **_kwargs: object) -> None:
+            raise KeyboardInterrupt
+
+        monkeypatch.setattr(subprocess, "run", interrupt)
+        assert run((sys.executable, "-c", "pass")) == INTERRUPTED_STATUS
+        # 130 is what a shell reports for Ctrl-C, so a script wrapping this
+        # one can tell an interruption from a gate that genuinely failed.
+        assert "interrupted" in capsys.readouterr().err
+
+    def test_an_interrupt_abandons_the_remaining_gates(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Working through the rest of `check` ignores what was just asked."""
+        attempted: list[tuple[str, ...]] = []
+
+        def interrupt(command: tuple[str, ...]) -> int:
+            attempted.append(command)
+            return INTERRUPTED_STATUS
+
+        monkeypatch.setattr(qa, "run", interrupt)
+        assert run_task("check") == INTERRUPTED_STATUS
+        assert len(attempted) == 1
+
+    def test_a_tool_killed_by_a_signal_is_not_reported_as_success(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """POSIX reports a killed process as a negative status, not a positive one."""
+        # A gate that was killed - by the OOM killer, or a CI timeout - has
+        # not passed. Anything comparing against a positive failure, or
+        # testing `status > 0`, would call this a green run.
+        monkeypatch.setattr(qa, "run", lambda _command: -15)
+        assert run_task("check") != 0
 
 
 class TestEveryArgumentSurvivesBeingEchoed:

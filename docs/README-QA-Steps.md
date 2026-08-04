@@ -134,6 +134,18 @@ depend on the real `sys.argv` — use `monkeypatch`, which also restores state
 afterwards, or the test breaks the moment anyone runs `pytest -k` or uses an
 IDE test runner.
 
+### Consistency — `tests/test_release.py`
+
+Some facts have to agree across files nobody ever edits together: the version
+in `pyproject.toml`, the version in `uv.lock`, and the one the package
+reports. Each drifts silently, and each is discovered at the worst possible
+moment. That file checks them, along with what the built wheel actually
+contains — that `py.typed` ships, that the tests do not, and that no
+oversized file has been committed where it will slow every clone for ever.
+
+The wheel checks are marked `integration`, so `qa.py fast` skips them and the
+inner loop stays quick.
+
 ### Properties — `hypothesis`
 
 An ordinary test checks a case you thought of. That is its weakness: the bugs
