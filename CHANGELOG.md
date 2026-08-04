@@ -13,6 +13,18 @@ time, so they are summaries rather than a contemporaneous record.
 
 ### Added
 
+- Property-based testing with `hypothesis`. A property states a rule that
+  must hold for every input and lets the tool hunt for the input that
+  breaks it, which is the class of bug an example-based suite keeps
+  missing however many examples it accumulates. `tests/test_qa.py` carries
+  a worked example, so the practice ships into generated projects with
+  something to copy rather than as an unused dependency.
+- `pytest-randomly`, shuffling the test order on every run. A test that
+  passes only because another ran first leaves a suite that is green and
+  lying, and running them in the same order every time is exactly what
+  hides it. It guards `tests/conftest.py`, whose restoration of the global
+  logging state is load-bearing and would otherwise go unchecked.
+
 - `qa.py setup`: one command after cloning, installing the environment and
   both Git hook stages. Git does not clone `.git/hooks`, so a fresh
   checkout has no local gates until somebody remembers three separate
@@ -104,6 +116,12 @@ time, so they are summaries rather than a contemporaneous record.
 
 ### Fixed
 
+- A project name ending in a newline is rejected rather than accepted.
+  `$` in a Python regular expression also matches immediately before a
+  trailing newline, so `my-app\n` — what a name pasted out of a file
+  arrives as — validated and went on to create a directory with a newline
+  in its name. The pattern is anchored with `\Z` now. Found by the first
+  run of the new property test, and kept as an example beside it.
 - `--into ~/work` now expands the tilde itself. PowerShell does not expand
   `~` in arguments to native commands, so on Windows the documented example
   created a directory literally named `~` instead of using the home

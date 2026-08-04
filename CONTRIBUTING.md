@@ -64,6 +64,14 @@ leave out who got it wrong and how it was found.
   by ruff's `ANN` and `D` rule families.
 - Tests use plain `assert`, which pytest rewrites into a readable diff on
   failure.
+- Tests run in a random order, so none may rely on another having run first.
+  A failure prints the seed that produced it; pass that value back as
+  `--randomly-seed=` to replay the same order.
+- Where a rule holds for every input rather than for one case, write it as a
+  property with `hypothesis` rather than a longer list of examples. There is a
+  worked example in `tests/test_qa.py`. When a property finds a failure, fix
+  it and add the case as a parametrised example as well — Hypothesis's own
+  record of it is a local cache that Git never sees.
 - Keep coverage at 100%. If a line genuinely cannot be tested, exclude it
   explicitly in `[tool.coverage.report]` rather than writing a test that
   asserts nothing.

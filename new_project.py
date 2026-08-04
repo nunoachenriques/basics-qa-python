@@ -47,6 +47,7 @@ EXCLUDED_NAMES = frozenset(
     {
         ".git",
         ".venv",
+        ".hypothesis",
         ".mypy_cache",
         ".pytest_cache",
         ".ruff_cache",
@@ -70,7 +71,11 @@ EXCLUDED_NAMES = frozenset(
 EXCLUDED_PREFIXES = (".coverage",)
 
 #: A distribution name per PEP 503: lowercase, digits, single separators.
-PROJECT_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*$")
+#: Anchored with ``\Z``, not ``$``: ``$`` also matches immediately before a
+#: trailing newline, so ``"my-app\n"`` - which is what a name pasted out of
+#: a file or a here-document arrives as - passed validation and went on to
+#: create a directory with a newline in its name.
+PROJECT_NAME_PATTERN = re.compile(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*\Z")
 
 #: The version a generated project starts at.
 INITIAL_VERSION = "0.1.0"

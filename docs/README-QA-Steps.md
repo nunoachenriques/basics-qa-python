@@ -134,6 +134,64 @@ depend on the real `sys.argv` — use `monkeypatch`, which also restores state
 afterwards, or the test breaks the moment anyone runs `pytest -k` or uses an
 IDE test runner.
 
+### Properties — `hypothesis`
+
+An ordinary test checks a case you thought of. That is its weakness: the bugs
+that survive a suite are the ones nobody imagined, so a suite made entirely of
+examples keeps missing the same class of thing however many examples you add.
+
+A property states a rule that must hold for *every* input, and Hypothesis goes
+looking for the input that breaks it — hundreds of shapes per run, including
+the empty string, the trailing newline, and pathological unicode nobody would
+sit down and type. When it finds a failure it *shrinks* it to the smallest
+example that still fails, so the report names something readable, and saves it
+so that case is replayed for ever afterwards.
+
+`tests/test_qa.py` carries a worked example to copy: whatever command `qa.py`
+echoes, reading that line back the way a shell would has to yield the same
+arguments it was handed. The rule holds for every command; no list of examples
+could say as much.
+
+This is not free. Properties take longer to think of than examples, because
+you have to find the rule rather than the case. Reach for them where the rule
+is clear — round trips, operations that must change nothing the second time
+they run, outputs that must satisfy an invariant whatever went in — and use
+plain examples everywhere else.
+
+It earns its place. The first run of that property found a project name with a
+trailing newline passing validation, because `$` in a Python regex also
+matches immediately before a final newline. `\Z` is the anchor that means what
+`$` looks like it means.
+
+Hypothesis's record of past failures lives in `.hypothesis/`, a local cache
+Git never sees. A case worth keeping goes into a parametrised example beside
+the property, where it is shared and stays fast.
+
+### Test order — `pytest-randomly`
+
+The order tests run in is an accident, and a suite that depends on that
+accident is green and lying. It happens through global state: one test leaves
+a logger at `DEBUG`, or a module imported, or an environment variable set, and
+another passes only because of it.
+
+`pytest-randomly` shuffles the order on every run, so that dependency surfaces
+as a failure instead of hiding. There is nothing to learn and no API to call —
+installing it is the whole change.
+
+The cost is that a failure may not reproduce next run. Every run prints the
+seed it used, so pin it to get the same order back:
+
+```shell
+uv run pytest --randomly-seed=12345
+```
+
+Here it guards something specific. `tests/conftest.py` restores the global
+logging state after every test, because command-line entry points call
+`logging.basicConfig(force=True)`, which rebinds the root handlers to whatever
+`sys.stderr` was at that moment — under pytest, the current test's capture
+buffer. That fixture is load-bearing, and in a fixed order a broken one would
+leave the suite green.
+
 ### Security — `ruff` and `pip-audit`
 
 Two different concerns needing two different tools:
@@ -287,7 +345,10 @@ uv run pre-commit run --all-files --hook-stage pre-push
 bytecode, the virtual environment, IDE folders, build artefacts, tool caches,
 coverage reports, and `.env` files. Coverage writes one file per process when
 measuring subprocesses, named `.coverage.<host>.<pid>.<random>`, so the
-pattern `.coverage.*` is listed alongside the plain name.
+pattern `.coverage.*` is listed alongside the plain name. Hypothesis's
+`.hypothesis/` is there too, and `new_project.py` excludes every one of these
+from a generated project, so a new project never starts life holding another
+project's cached state.
 
 ## Next
 

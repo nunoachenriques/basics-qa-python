@@ -118,6 +118,21 @@ TASKS: dict[str, Task] = {
 }
 
 
+def printable(command: tuple[str, ...]) -> str:
+    """
+    Render a command as one line that can be pasted back into a shell.
+
+    Arguments containing spaces are quoted. Joined on spaces alone, the
+    ``fast`` task echoed ``-m not integration``, which reads as two
+    arguments where the command has one - a different command from the one
+    actually being run, and a broken one if anybody pasted it.
+
+    :param command: The command and its arguments.
+    :return: The command as a single line.
+    """
+    return " ".join(f'"{part}"' if " " in part else part for part in command)
+
+
 def run(command: tuple[str, ...]) -> int:
     """
     Run one command, echoing it first so the output explains itself.
@@ -125,11 +140,7 @@ def run(command: tuple[str, ...]) -> int:
     :param command: The command and its arguments.
     :return: The command's exit status.
     """
-    # Quote the arguments that contain spaces. Joined on spaces alone, the
-    # `fast` task echoed `-m not integration`, which is a different command
-    # from the one being run and fails if pasted into a shell.
-    printable = " ".join(f'"{part}"' if " " in part else part for part in command)
-    sys.stdout.write(f"$ {printable}\n")
+    sys.stdout.write(f"$ {printable(command)}\n")
     sys.stdout.flush()
     try:
         return subprocess.run(command, check=False).returncode  # noqa: S603

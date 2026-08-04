@@ -18,9 +18,13 @@ Basics on Quality Assurance in Python.
 Test the ``qa`` task runner.
 """
 
+import shlex
+import string
 import sys
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 import qa
 from qa import (
@@ -29,12 +33,27 @@ from qa import (
     USAGE_ERROR_STATUS,
     build_parser,
     main,
+    printable,
     run,
     run_task,
 )
 
 #: An arbitrary non-zero status, distinguishable from a real tool's exit code.
 FAILING_STATUS = 3
+
+#: The characters a command argument realistically contains. Quotes and
+#: backslashes are deliberately absent: :py:func:`qa.printable` quotes for
+#: reading, not for surviving every shell ever written, and no task passes
+#: an argument containing either.
+ARGUMENT_CHARACTERS = string.ascii_letters + string.digits + "-_.=/"
+
+#: One command argument: a few ordinary words, sometimes separated by the
+#: spaces that are the whole reason quoting is needed at all.
+ARGUMENTS = st.lists(
+    st.text(alphabet=ARGUMENT_CHARACTERS, min_size=1, max_size=8),
+    min_size=1,
+    max_size=3,
+).map(" ".join)
 
 
 class TestTasks:
@@ -110,6 +129,39 @@ class TestRun:
         status = run(("definitely-not-a-real-command",))
         assert status == COMMAND_NOT_FOUND_STATUS
         assert "not found" in capsys.readouterr().err
+
+
+class TestEveryArgumentSurvivesBeingEchoed:
+    """
+    A worked example of a property-based test, kept here to be copied.
+
+    Every test above checks a case somebody thought of: an argument with a
+    space in it, a command that is not installed. That is the weakness of
+    example-based testing - it only ever covers what was imagined, and the
+    bugs that survive are the ones nobody imagined.
+
+    A property states a rule that must hold for EVERY input, and Hypothesis
+    goes looking for the input that breaks it, trying a fresh set of shapes
+    on every run. When it finds one it shrinks it to the smallest example
+    that still fails - so the report names ``["a b"]`` rather than some
+    forty-character string - and saves it, so that once found, a failure is
+    checked for ever afterwards.
+
+    Write these for rules, not for cases: round trips, things that must not
+    change when applied twice, and outputs that must always satisfy some
+    invariant whatever went in.
+    """
+
+    @given(command=st.lists(ARGUMENTS, min_size=1, max_size=5))
+    def test_the_echoed_line_splits_back_into_the_same_arguments(
+        self,
+        command: list[str],
+    ) -> None:
+        """What is echoed has to be the command that ran, not a lookalike."""
+        # shlex.split is how a shell reads a line back into arguments, so
+        # this asks the question that matters: if somebody pasted what we
+        # printed, would they run the command we actually ran?
+        assert shlex.split(printable(tuple(command))) == command
 
 
 class TestRunTask:

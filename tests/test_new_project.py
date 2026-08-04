@@ -18,15 +18,19 @@ Basics on Quality Assurance in Python.
 Test the ``new_project`` bootstrap script.
 """
 
+import contextlib
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 import new_project
 from new_project import (
+    PROJECT_NAME_PATTERN,
     ProjectError,
     build_parser,
     copy_template,
@@ -99,7 +103,21 @@ class TestValidation:
 
     @pytest.mark.parametrize(
         "name",
-        ["My-Project", "my_project", "2project", "my--project", "my-", "-my", ""],
+        [
+            "My-Project",
+            "my_project",
+            "2project",
+            "my--project",
+            "my-",
+            "-my",
+            "",
+            # Found by the property test below, kept here as an example
+            # because Hypothesis's own record of it is a local cache that
+            # Git never sees. `$` matches before a trailing newline, so this
+            # validated and then created a directory with a newline in its
+            # name; the pattern is anchored with `\Z` now.
+            "my-project\n",
+        ],
     )
     def test_rejects_invalid_names(self, name: str) -> None:
         """Names that would break packaging are rejected."""
@@ -138,6 +156,39 @@ class TestRewrite:
     def test_distribution_name_is_not_mangled_by_script_name(self) -> None:
         """The distribution name contains the script name; order must hold."""
         assert rewrite('"basics-qa-python"', "my-app") == '"my-app"'
+
+
+class TestPropertiesThatMustAlwaysHold:
+    """
+    Rules that hold for every input, not only the ones we thought of.
+
+    The name is the very first thing anybody types, and it arrives from a
+    shell that will hand over whatever was pasted into it.
+    """
+
+    @given(name=st.text())
+    def test_validation_only_ever_raises_project_error(self, name: str) -> None:
+        """Any other exception reaches a newcomer as a traceback."""
+        # The entire point of validating is that a bad name produces an
+        # explanation. A name that instead trips some IndexError deep inside
+        # is the one case that explanation never covers.
+        with contextlib.suppress(ProjectError):
+            validate_project_name(name)
+
+    @given(name=st.from_regex(PROJECT_NAME_PATTERN))
+    def test_an_accepted_name_is_always_an_importable_package(self, name: str) -> None:
+        """Accepting a name that cannot be imported only defers the failure."""
+        try:
+            validate_project_name(name)
+        except ProjectError:
+            return
+        assert to_package_name(name).isidentifier()
+
+    @given(text=st.text())
+    def test_rewriting_twice_changes_nothing_further(self, text: str) -> None:
+        """Renaming an already-renamed tree must leave it exactly as it was."""
+        once = rewrite(text, "my-app")
+        assert rewrite(once, "my-app") == once
 
 
 class TestExclusion:

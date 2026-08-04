@@ -159,12 +159,21 @@ Windows by default, and this project asks you to install only `git` and `uv`.
 | Style and correctness | `ruff check` | On commit, and in CI |
 | Type annotations | `mypy --strict` | On commit, and in CI |
 | Tests and coverage | `pytest` | On push, and in CI |
+| Properties, over generated input | `hypothesis` | With the tests |
+| Test-order independence | `pytest-randomly` | With the tests |
 | Known vulnerabilities | `pip-audit` | On push, and in CI |
 | Packaging | `uv build` | In CI |
 
 The hooks run the fast checks when you commit and the slow ones when you push.
 Continuous integration runs all of them again, on three operating systems and
 four Python versions, because hooks can be skipped and a pipeline cannot.
+
+The test run does two things beyond running the tests. It shuffles their order
+every time, so a test that only passes because another ran first fails instead
+of hiding; when one does fail, the printed seed replays that exact order. And
+where a rule holds for every possible input rather than for a case somebody
+thought of, `hypothesis` generates input looking for the one that breaks it —
+`tests/test_qa.py` has a worked example to copy.
 
 For the reasoning behind each choice, see
 [Quality assurance, step by step](docs/README-QA-Steps.md).

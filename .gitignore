@@ -14,6 +14,10 @@ coverage.xml
 /.mypy_cache/
 /.ruff_cache/
 /.pytest_cache/
+# Hypothesis saves every failing example it finds here and replays it on the
+# next run, so a failure found once keeps being checked. It is a local cache
+# rebuilt from the tests themselves, not something to share through Git.
+/.hypothesis/
 # uv's cache, when a pipeline is told to keep it inside the project so it
 # can be cached between runs (see .gitlab-ci.yml).
 /.uv-cache/

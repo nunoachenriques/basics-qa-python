@@ -47,11 +47,20 @@ packages = ["basics"]
 
 [dependency-groups]
 dev = [
+    # Property-based testing: state a rule that must hold for EVERY input and
+    # let it hunt for the input that breaks the rule. Example-based tests only
+    # cover the cases somebody thought of, which is precisely why the
+    # interesting bugs survive them. Worked example in tests/test_qa.py.
+    "hypothesis>=6.163.0",
     "mypy>=1.17.1",
     "pip-audit>=2.7.3",
     "pre-commit>=4.3.0",
     "pytest>=9.0.3",
     "pytest-cov>=6.2.1,<7",  # 7.x changed subprocess coverage measurement; see commit message
+    # Shuffles the test order on every run. A test that passes only because
+    # another test happened to run first leaves a suite that is green and
+    # lying; running them in the same order every time is what hides it.
+    "pytest-randomly>=4.1.0",
     "ruff>=0.12.9,<0.13",  # pre-1.0: minor bumps can add newly-enabled rules
 ]
 
@@ -99,6 +108,7 @@ constraint-dependencies = [
 exclude = [
     ".git",
     ".venv",
+    ".hypothesis",
     ".mypy_cache",
     ".pytest_cache",
     ".ruff_cache",
