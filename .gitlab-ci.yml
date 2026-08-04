@@ -1,0 +1,132 @@
+# GitLab CI/CD pipeline: the same gates the Git hooks run locally.
+#
+# Hooks are advisory - `--no-verify` skips them and a developer who never
+# runs `pre-commit install` has none at all. This pipeline is what actually
+# holds the standard, so it must stay in step with .pre-commit-config.yaml.
+#
+# SCOPE: this pipeline runs the same GATES as GitHub Actions, but not the
+# same MATRIX. It is one job on Debian and Python 3.11, where the GitHub
+# workflow is twelve: three operating systems by four interpreters. Windows
+# and macOS behaviour, and every interpreter after 3.11, are covered there
+# and not here. Add `parallel: matrix:` over a set of images to close the
+# gap if GitLab is your only pipeline.
+#
+# SUPPLY CHAIN: the image is pinned to a specific uv and Python version.
+# Pin it by digest (ghcr.io/astral-sh/uv:python3.11-bookworm-slim@sha256:...)
+# for stricter provenance; a tag can be repointed, a digest cannot.
+image: ghcr.io/astral-sh/uv:0.11.33-python3.11-bookworm-slim
+
+variables:
+  # Keep uv's cache inside the build directory so GitLab can cache it.
+  UV_CACHE_DIR: "$CI_PROJECT_DIR/.uv-cache"
+  # Fail rather than silently reaching for a different interpreter.
+  UV_PYTHON_DOWNLOADS: "never"
+  # Refuse to run if uv.lock and pyproject.toml have drifted apart.
+  UV_FROZEN: "1"
+  # Check for known-malicious packages, not merely published CVEs. Set for
+  # every job, because every job installs through `default.before_script`
+  # and the quality stage runs dependency code before the security stage
+  # is reached. Set on the audit job alone it gated one job of seven, and
+  # not the ones that actually execute what was installed.
+  UV_MALWARE_CHECK: "1"
+
+cache:
+  key:
+    files:
+      - uv.lock
+  paths:
+    - .uv-cache
+
+stages:
+  - quality
+  - security
+  - package
+
+default:
+  before_script:
+    - uv sync --dev --locked
+  interruptible: true
+
+# --------------------------------------------------------------- quality ---
+
+format:
+  stage: quality
+  script:
+    - uv run ruff format --check .
+
+lint:
+  stage: quality
+  script:
+    # --no-fix: CI reports problems, it never quietly rewrites the tree.
+    - uv run ruff check . --no-fix
+
+types:
+  stage: quality
+  script:
+    - uv run mypy .
+
+test:
+  stage: quality
+  script:
+    - uv run pytest --cov-report=term --cov-report=xml
+  coverage: '/^TOTAL.+?(\d+\.\d+\%)$/'
+  artifacts:
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+
+# -------------------------------------------------------------- security ---
+
+audit:
+  stage: security
+  script:
+    - uv run pip-audit
+  # A vulnerability disclosed today is not this merge request's fault, but
+  # it is still worth surfacing. Blocking is the safer default; set
+  # allow_failure: true if the team prefers a warning on merge requests.
+  allow_failure: false
+
+sbom:
+  stage: security
+  script:
+    # A Software Bill of Materials answers "are we affected?" in minutes
+    # rather than days when the next advisory lands. CycloneDX comes from
+    # pip-audit, which is already a dependency, so this costs nothing extra.
+    - uv run pip-audit --format cyclonedx-json -o sbom.cyclonedx.json
+    # The fully resolved, hash-pinned dependency set, for reproducing an
+    # exact environment months later.
+    - uv export --format requirements-txt --all-groups > requirements.lock.txt
+  artifacts:
+    paths:
+      - sbom.cyclonedx.json
+      - requirements.lock.txt
+    expire_in: 1 year
+
+# --------------------------------------------------------------- package ---
+
+build:
+  stage: package
+  script:
+    - uv build
+    # An editable install resolves from the source tree and so hides a
+    # missing py.typed or a module left out of the wheel entirely. Match the
+    # full path, not a bare "py.typed": unanchored, the check passes on a
+    # file shipped anywhere at all, including outside the package.
+    - python -m zipfile -l dist/*.whl > wheel.txt
+    - grep -q "basics/py.typed" wheel.txt
+    - grep -q "basics/cli.py" wheel.txt
+    # Installing it is the only way to find a broken console script. The
+    # entry point is declared in pyproject.toml and never executed until
+    # something installs the wheel and runs the command.
+    - uv venv /tmp/venv
+    - VIRTUAL_ENV=/tmp/venv uv pip install dist/*.whl
+    - /tmp/venv/bin/basics-qa --version
+    # --help too: the usage examples are built from the running program's
+    # own name, and app_cli.py is not in the wheel.
+    - /tmp/venv/bin/basics-qa --help
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 month

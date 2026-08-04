@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # Python dependencies, via the uv lockfile.
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        patterns: [ "*" ]
+
+  # The workflow's own actions, which are a supply-chain surface too.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

@@ -1,0 +1,127 @@
+name: Quality Assurance
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  schedule:
+    # A dependency advisory can be published long after the code last
+    # changed, so re-run the audit weekly rather than only on a push.
+    - cron: "0 6 * * 1"
+
+# Least privilege: these checks only ever need to read the repository.
+permissions:
+  contents: read
+
+# A new push to the same branch makes an in-flight run obsolete.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# NOTE ON SUPPLY CHAIN: the actions below are pinned to major-version tags,
+# which are mutable. For stricter provenance, pin each to a full commit SHA
+# (e.g. actions/checkout@<sha>) and let Dependabot bump them.
+
+jobs:
+  quality:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        # The setup docs cover Linux, macOS, and Windows, so all three are
+        # tested. Windows especially: path separators, line endings, and
+        # interpreter discovery differ there and break things Linux never sees.
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        # Every interpreter `requires-python` allows, up to the newest
+        # released. An unbounded ">=3.11" claims support for whatever ships
+        # next, so a version left out of this list is one the project
+        # promises on PyPI and has never once run.
+        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
+
+    env:
+      # REQUIRED: without this, every uv command (sync AND run) reads
+      # .python-version and silently uses 3.11, so every matrix job would
+      # test the same interpreter while appearing to test four.
+      # UV_PYTHON takes precedence over the .python-version file.
+      UV_PYTHON: ${{ matrix.python-version }}
+      # Check for known-malicious packages, not merely published CVEs. Set
+      # on the JOB, not on the audit step: uv performs the check whenever it
+      # resolves, so scoped to the audit step it still ran - but it ran last,
+      # after `uv run pytest` had already executed every dependency. Catching
+      # a malicious package after running it is not catching it. At job level
+      # the install itself is gated, before anything executes.
+      # Set here rather than in pyproject.toml: enabling it project-wide
+      # makes every developer's `uv sync` fail when OSV is unreachable.
+      UV_MALWARE_CHECK: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies (locked)
+        run: uv sync --dev --locked
+
+      - name: Confirm the interpreter matches the matrix
+        run: uv run python --version
+
+      - name: Format check
+        run: uv run ruff format --check .
+
+      - name: Lint
+        run: uv run ruff check . --no-fix --output-format=github
+
+      - name: Type check
+        run: uv run mypy .
+
+      - name: Tests and coverage
+        run: uv run pytest
+
+      - name: Dependency vulnerability audit
+        run: uv run pip-audit
+
+  package:
+    # Building and installing the wheel catches packaging faults that an
+    # editable install hides: a missing py.typed, say, or a module left out
+    # of the wheel entirely.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # This job resolves and downloads too, so it needs the same check.
+      UV_MALWARE_CHECK: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Build the wheel and sdist
+        run: uv build
+
+      - name: Confirm the wheel ships py.typed and the package
+        run: |
+          python3 -m zipfile -l dist/*.whl | tee /tmp/wheel.txt
+          grep -q "basics/py.typed" /tmp/wheel.txt
+          grep -q "basics/cli.py" /tmp/wheel.txt
+
+      - name: Confirm the console script works from an installed wheel
+        run: |
+          uv venv /tmp/venv
+          VIRTUAL_ENV=/tmp/venv uv pip install dist/*.whl
+          /tmp/venv/bin/basics-qa --version
+          # --help too: the usage examples are built from the running
+          # program's own name, and app_cli.py is not in the wheel.
+          /tmp/venv/bin/basics-qa --help
+
+      - name: Generate the software bill of materials
+        run: uv run pip-audit --format cyclonedx-json -o sbom.cyclonedx.json
+
+      - name: Publish the bill of materials
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.cyclonedx.json
