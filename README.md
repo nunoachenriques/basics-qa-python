@@ -18,7 +18,7 @@ you.
 ## Contents
 
 * [Get started](#get-started)
-* [Run the application](#run-the-application)
+* [The application skeleton](#the-application-skeleton)
 <!-- template-only:start -->
 * [Start a new project](#start-a-new-project)
 <!-- template-only:end -->
@@ -50,37 +50,72 @@ Then check that everything passes:
 uv run python qa.py check
 ```
 
-## Run the application
+## The application skeleton
 
-As shipped, the application parses its arguments, logs what it parsed, and
-exits. `ARGUMENT1` is required.
+This project ships a small command-line application that deliberately does
+nothing useful. It is a skeleton: the place your own code goes, with
+everything *around* your code already built and tested.
 
-```shell
-uv run python app_cli.py ARGUMENT1
-```
+As shipped it reads its arguments, logs what it read, and exits.
 
-| Option | Meaning |
-| --- | --- |
-| `ARGUMENT1` | A placeholder positional argument. Required. |
-| `-o OPTION1` | A placeholder option. |
-| `-v` | Log at `INFO` level. Repeat as `-vv` for `DEBUG`. |
-| `--version` | Print the version and exit. |
-| `--help` | Print usage and exit. |
+### See it run
 
-Without `-v` the run is silent:
+Nothing is printed, because logging is quiet unless you ask for it:
 
 ```shell
 uv run python app_cli.py hello
 ```
 
-With an option and logging:
+Add `-v` and it says what it understood:
 
 ```shell
-uv run python app_cli.py -o world hello -v
+uv run python app_cli.py hello -o world -v
 ```
 
-To build your own application, replace the body of `Cli.run()` in
-`basics/cli.py`. Everything else is already in place.
+```text
+2026-01-15 09:00:00,000 | basics.cli | INFO | Logging set to INFO
+2026-01-15 09:00:00,000 | basics.cli | INFO | Basics on Quality Assurance in Python 3.0.0 | option1: world | argument1: hello | Started
+```
+
+Here `hello` is the required argument and `world` the optional one. In the
+code they are called `argument1` and `option1` — deliberately meaningless
+names, waiting for you to rename them to whatever your application takes.
+
+### What you do not have to build
+
+| Already working | Try it |
+| --- | --- |
+| Argument parsing, and a `--help` written from it | `uv run python app_cli.py --help` |
+| `-v` for `INFO`, `-vv` for `DEBUG`, quiet by default | `uv run python app_cli.py hello -vv` |
+| A version read from the installed package | `uv run python app_cli.py --version` |
+| Logging set up for every module in the package | in `Cli.bootstrap()` |
+| An exit status a script or a shell can read | in `Cli.run()` |
+| A real command on `PATH` once the project is installed | `[project.scripts]` |
+
+That list is the reason the skeleton exists. Each item is a small decision
+that is easy to get subtly wrong, and all of them are made, tested, and
+covered before you write your first line.
+
+### Where your code goes
+
+Open `basics/cli.py` and replace the body of `Cli.run()`:
+
+```python
+def run(self: "Cli") -> NoReturn:
+    """Run the application."""
+    # Your application starts here. self.argument1 and self.option1 hold
+    # whatever the user typed.
+    raise SystemExit(0)
+```
+
+Then rename `argument1` and `option1` to real names, in `Cli.bootstrap()`
+where they are declared and in `tests/test_cli.py` where they are checked.
+The tests failing until you update them is the gate doing its job.
+
+Two files, because they do different things: `basics/cli.py` is the code that
+ships inside the package, and `app_cli.py` is a three-line launcher that lets
+you run it from a checkout without installing anything. You will not need to
+change `app_cli.py`.
 
 <!-- template-only:start -->
 ## Start a new project
