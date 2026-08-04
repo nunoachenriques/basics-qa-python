@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 """
-Basics on Quality Assurance in Python
+Basics on Quality Assurance in Python.
 
 Command-line interface.
 """
@@ -38,15 +38,15 @@ class Cli:
 
     def __init__(self: "Cli") -> None:
         """
-        Initialise the class parameters:
+        Initialise the class parameters.
 
             * self.option1: args option1 placeholder.
             * self.argument1: args argument1 placeholder.
-            * self.version: semantic version from VERSION file.
+            * self.version: the installed distribution version.
         """
-        self.option1 = None
-        self.argument1 = None
-        self.version = __version__
+        self.option1: str | None = None  # -o is optional
+        self.argument1: str = ""  # positional, always set once bootstrap() runs
+        self.version: str = __version__
 
     def bootstrap(self: "Cli") -> "Cli":
         """
@@ -59,9 +59,18 @@ class Cli:
             self.argument1 = args.argument1
         """
         cmd_line_parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter)
-        cmd_line_parser.description = (
-            f"Basics on Quality Assurance in Python {self.version}"
-            "\n\nhttps://github.com/nunoachenriques/basics-qa-python"
+        # One short statement, not a string split across two lines. Renaming
+        # shortens the title, and an implicit concatenation that then fits on
+        # one line gets joined by the formatter - so a generated project
+        # failed its own `ruff format --check` before anyone had touched it.
+        # The project URL lived here too, and renaming could not fix it: every
+        # generated project advertised this template's repository as its own.
+        cmd_line_parser.description = f"Basics on Quality Assurance in Python {self.version}"
+        cmd_line_parser.add_argument(
+            "--version",
+            action="version",
+            version=self.version,
+            help="Show the version and exit.",
         )
         cmd_line_parser.add_argument(
             "-v",
@@ -76,29 +85,43 @@ class Cli:
             help="The option1 help description.",
         )
         cmd_line_parser.add_argument("argument1", type=str, help="The argument1 help description.")
+        # %(prog)s, not a hardcoded path: argparse expands it to however the
+        # program was actually started. Installed users see `basics-qa`, and
+        # app_cli.py is not in the wheel for them to run.
         cmd_line_parser.epilog = (
             "Usage examples:"
-            "\n\n  Demonstration of the usage examples with verbose and argument:"
-            "\n    pipenv run python app_cli.py -v argument1"
-            "\n\n  Demonstration of the usage examples with option and argument:"
-            "\n    pipenv run python app_cli.py -o option1 argument1"
+            "\n\n  With verbosity and an argument:"
+            "\n    %(prog)s -v argument1"
+            "\n\n  With an option and an argument:"
+            "\n    %(prog)s -o option1 argument1"
         )
         args = cmd_line_parser.parse_args()
+        # WARNING, not CRITICAL. At CRITICAL an application built on this
+        # skeleton loses its own logger.warning() and logger.error() calls
+        # unless the user happens to pass -v, which is the one situation
+        # where a message most needs to be seen. Nothing here logs below
+        # INFO, so the default run stays silent either way.
         if args.v == 0:
-            logger.setLevel(logging.CRITICAL)
+            level = logging.WARNING
         elif args.v == 1:
-            logger.setLevel(logging.INFO)
+            level = logging.INFO
         else:
-            logger.setLevel(logging.DEBUG)
+            level = logging.DEBUG
+        # Set the level on the PACKAGE logger, not this module's own. Every
+        # other module in the package inherits from it, so their records
+        # honour -v too. Setting it on `logger` alone silently mutes every
+        # sibling module, which only becomes visible once the package has
+        # more than one.
+        logging.getLogger(__package__).setLevel(level)
         # Set logging format with more information (function name) if DEBUG mode.
-        if logger.level == logging.DEBUG:
+        if level == logging.DEBUG:
             # noinspection SpellCheckingInspection
             logger_format = "%(asctime)s | %(name)s | %(funcName)s | %(levelname)s | %(message)s"
         else:
             # noinspection SpellCheckingInspection
             logger_format = "%(asctime)s | %(name)s | %(levelname)s | %(message)s"
         logging.basicConfig(format=logger_format, force=True)
-        logger.info("Logging set to %s", logging.getLevelName(logger.level))
+        logger.info("Logging set to %s", logging.getLevelName(level))
         self.option1 = args.o
         self.argument1 = args.argument1
         return self
@@ -106,10 +129,19 @@ class Cli:
     def run(self: "Cli") -> NoReturn:
         """Run the application."""
         logger.info(
-            "Basics QA Python %s | option1: %s | argument1: %s | Started",
+            "Basics on Quality Assurance in Python %s | option1: %s | argument1: %s | Started",
             self.version,
             self.option1,
             self.argument1,
         )
         # Add code to run your application below this line and before the SystemExit.
         raise SystemExit(0)
+
+
+def main() -> NoReturn:
+    """
+    Provide the console-script entry point declared in ``pyproject.toml``.
+
+    Installing the project exposes this as the ``basics-qa`` command.
+    """
+    Cli().bootstrap().run()
