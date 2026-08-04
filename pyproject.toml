@@ -63,8 +63,27 @@ dev = [
     "pytest-randomly>=4.1.0",
     "ruff>=0.12.9,<0.13",  # pre-1.0: minor bumps can add newly-enabled rules
 ]
+# Two groups that `uv sync --dev` deliberately does NOT install, so they
+# cost a generated project nothing but stay pinned, cooled down, and
+# tracked by Dependabot like everything else. Install one on demand with
+# `uv run --group <name> ...`.
+
+# Mutation testing: does any assertion NOTICE a line changing, which is the
+# question 100% coverage looks like it answers and does not. Configured in
+# mutation.toml, which explains how to verify the harness before believing
+# the score. Far too slow to be a gate.
 mutation = [
     "cosmic-ray>=8.4.6",
+]
+
+# The pipelines are the one part of this repository nothing else checks:
+# ruff does not read YAML, and a mistake in either is found by a pipeline
+# failing rather than by a gate. zizmor audits the GitHub workflows for
+# security (see zizmor.yml), check-jsonschema validates .gitlab-ci.yml
+# against GitLab's own schema.
+pipeline = [
+    "check-jsonschema>=0.37.4",
+    "zizmor>=1.28.0",
 ]
 
 [tool.uv]
@@ -92,35 +111,6 @@ constraint-dependencies = [
 # network that intercepts TLS, as many corporate proxies do. It is enabled
 # in CI instead, via UV_MALWARE_CHECK=1, where the network is dependable
 # and a failure is a signal rather than an obstacle.
-
-### MUTATION TESTING
-
-# Coverage says a line RAN. Mutation testing asks whether any assertion
-# would have NOTICED it changing - the question 100% coverage looks like it
-# answers and does not. mutmut alters the code one small change at a time
-# and re-runs the tests; a mutant the suite still passes is a line nothing
-# is actually checking.
-#
-# Deliberately NOT in the dev group, so `uv sync --dev` never installs it.
-# One test run per mutant is slow by nature, so this belongs in a scheduled
-# pipeline and in the occasional deliberate local run, never in front of a
-# commit:
-#
-#   uv run --group mutation mutmut run
-#   uv run --group mutation mutmut results
-#
-# Only the self-contained modules are mutated. new_project.py is covered by
-# tests that copy the whole repository and run real tools against it, which
-# mutmut cannot reproduce inside the working copy it mutates in.
-
-[tool.mutmut]
-paths_to_mutate = ["qa.py", "basics/"]
-tests_dir = ["tests/"]
-# --no-cov, because the coverage gate would fail every mutant run for
-# reasons having nothing to do with the mutant. -p no:randomly, because a
-# mutant must be the only thing that differs between two runs.
-runner = "python -m pytest -x -q --no-cov -p no:randomly tests/test_qa.py tests/test_cli.py"
-also_copy = ["pyproject.toml", "app_cli.py"]
 
 ### CODE FORMATTING + STYLE ENFORCEMENT
 #

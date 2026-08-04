@@ -69,7 +69,11 @@ test:
   stage: quality
   script:
     - uv run pytest --cov-report=term --cov-report=xml
-  coverage: '/^TOTAL.+?(\d+\.\d+\%)$/'
+  # `%` is deliberately not escaped. GitLab parses this with RE2, where
+  # `\%` is not a valid escape, so the backslash that used to be here
+  # risked the pattern being rejected and coverage silently never being
+  # reported at all. Found by validating this file against GitLab's schema.
+  coverage: '/^TOTAL.+?(\d+\.\d+%)$/'
   artifacts:
     when: always
     reports:
@@ -87,6 +91,15 @@ audit:
   # it is still worth surfacing. Blocking is the safer default; set
   # allow_failure: true if the team prefers a warning on merge requests.
   allow_failure: false
+
+pipeline-lint:
+  stage: security
+  script:
+    # The pipeline definitions are the one part of this repository nothing
+    # else checks: ruff does not read YAML, so a mistake in either is found
+    # by a pipeline failing rather than by a gate.
+    - uv run --group pipeline zizmor --config zizmor.yml .github/workflows/
+    - uv run --group pipeline check-jsonschema --builtin-schema vendor.gitlab-ci .gitlab-ci.yml
 
 sbom:
   stage: security

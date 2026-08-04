@@ -1,0 +1,32 @@
+# zizmor - a security audit for GitHub Actions workflows.
+#
+#   uv run --group pipeline zizmor .github/workflows/
+#
+# A workflow is code with credentials, and it is the one file in a
+# repository that nothing else lints. This catches the mistakes that only
+# matter once somebody else can open a pull request against it.
+
+rules:
+  unpinned-uses:
+    config:
+      policies:
+        # DELIBERATE, and a real trade-off rather than an oversight.
+        #
+        # zizmor's default asks for every action to be pinned to a commit
+        # hash, because a tag can be moved to point at different code and a
+        # hash cannot. That is genuinely stronger, and it is what a project
+        # handling secrets in its pipeline should do.
+        #
+        # This one requires a tag instead. The actions used here are
+        # first-party (actions/*) and astral-sh/setup-uv, the pipeline holds
+        # no secrets, and `permissions` is read-only throughout. Against
+        # that, hashes are unreadable in review and go stale silently unless
+        # somebody keeps Dependabot's pull requests moving - and a stale
+        # pinned action is its own supply-chain problem.
+        #
+        # `ref-pin` still refuses the thing that actually bites: an action
+        # tracking a branch, which changes under you with no version at all.
+        #
+        # Switch to `hash-pin` if this pipeline ever gains a secret, or if
+        # it starts running actions from accounts you do not know.
+        "*": ref-pin

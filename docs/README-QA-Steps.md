@@ -204,6 +204,58 @@ logging state after every test, because command-line entry points call
 buffer. That fixture is load-bearing, and in a fixed order a broken one would
 leave the suite green.
 
+<!-- template-only:start -->
+### The whole path, with real Git — `tests/test_journey.py`
+
+Every other test about the hooks reads the task table or
+`.pre-commit-config.yaml` and checks what they *say*. None of them ever
+installed a hook, made a commit, or pushed — so nothing proved that a badly
+formatted commit is actually refused, or that the pre-push stage exists
+anywhere but in a line of YAML. Those are the gates this project is for.
+
+This clones the repository with real `git clone`, runs the one documented
+setup command, and then lets Git run the hooks: a lint violation is refused
+at commit, a clean change is accepted, and a push whose coverage has dropped
+is refused at the push stage. It also generates a project with
+`--no-install` and finishes it by hand, which is the path somebody who
+skipped a step has to be able to take.
+
+It takes about a minute, and is marked `integration` so `qa.py fast` skips
+it. The hooks it triggers run this suite again, so the tests skip themselves
+when they find `QA_JOURNEY_RUNNING` in the environment — without that
+guard, each journey starts another one inside itself.
+<!-- template-only:end -->
+
+### The pipelines themselves — `zizmor` and `check-jsonschema`
+
+The pipeline definitions are the one part of the repository nothing else
+checks. ruff does not read YAML, so a mistake in either is found by a
+pipeline failing rather than by a gate — and a workflow is code that runs
+with credentials, which is worth auditing rather than merely parsing.
+
+```shell
+uv run --group pipeline zizmor --config zizmor.yml .github/workflows/
+uv run --group pipeline check-jsonschema --builtin-schema vendor.gitlab-ci .gitlab-ci.yml
+```
+
+Both found real problems on their first run:
+
+* `actions/checkout` leaves the job's credentials in `.git/config` unless
+  told not to, where anything later archiving the workspace can pick them
+  up. Nothing here pushes, so `persist-credentials: false` costs nothing.
+* The GitLab coverage regex escaped its `%`. GitLab parses that pattern with
+  RE2, where `\%` is not a valid escape at all, so the coverage figure risked
+  never being reported and nobody would have noticed a number quietly
+  missing from merge requests.
+
+`zizmor.yml` records one deliberate exception: actions are pinned to tags
+rather than commit hashes. Hashes are stronger — a tag can be moved — but
+they are unreadable in review and go stale unless somebody keeps Dependabot
+moving, and this pipeline holds no secrets and has read-only permissions.
+The policy still refuses an action tracking a *branch*, which is the case
+that actually bites. The reasoning is in the file, next to the setting, so
+the trade-off can be revisited rather than rediscovered.
+
 ### Whether the tests would notice — `cosmic-ray`
 
 Coverage says a line *ran*. It cannot say whether any assertion would have

@@ -13,6 +13,16 @@ time, so they are summaries rather than a contemporaneous record.
 
 ### Added
 
+- `tests/test_journey.py`: the whole path walked with real Git in a real
+  clone — setup, a lint violation refused at commit, a clean change
+  accepted, and a push refused by the pre-push stage. Every existing hook
+  test read the configuration and checked what it said; none had ever
+  installed a hook or made a commit, so nothing proved the push stage
+  existed outside a line of YAML.
+- Pipeline linting with `zizmor` and `check-jsonschema`, in a `pipeline`
+  dependency group. The pipeline definitions were the one part of the
+  repository nothing checked, and both tools found real problems on their
+  first run.
 - Mutation testing with `cosmic-ray`, in a `mutation` dependency group of
   its own so `uv sync --dev` never installs it and generated projects
   carry the configuration at no cost. Coverage says a line ran; this asks
@@ -136,6 +146,13 @@ time, so they are summaries rather than a contemporaneous record.
 
 ### Fixed
 
+- The GitLab coverage regex no longer escapes its `%`. GitLab parses that
+  pattern with RE2, where `\%` is not a valid escape at all, so the
+  coverage figure risked never being reported — and a number quietly
+  missing from merge requests is not something anybody notices.
+- `actions/checkout` no longer leaves the job's credentials behind in
+  `.git/config`, where anything later archiving the workspace could pick
+  them up. Nothing in either pipeline pushes.
 - `--into` naming a file is refused with the reason. It used to reach
   `copytree`, fail with "the system cannot find the path specified" naming
   a path that plainly exists, and be reported as the Windows

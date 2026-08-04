@@ -61,6 +61,9 @@ EXCLUDED_NAMES = frozenset(
         "new_project.py",
         "test_new_project.py",
         "test_onboarding.py",
+        # Clones the template and drives its onboarding, so in a generated
+        # project it would clone a repository that has no commits yet.
+        "test_journey.py",
     },
 )
 
@@ -109,6 +112,14 @@ FRESH_AUTHORS = """authors = [
 README_TEMPLATE_ONLY = re.compile(
     r"<!-- template-only:start -->\n.*?<!-- template-only:end -->\n",
     re.DOTALL,
+)
+
+#: Documents carrying sections marked with the pair above. Every document
+#: is scanned, not only the README: the quality guide describes the
+#: template's own onboarding test, which a generated project does not ship.
+TEMPLATE_ONLY_DOCUMENTS = (
+    Path("README.md"),
+    Path("docs") / "README-QA-Steps.md",
 )
 
 #: Reserved by Windows for devices, at any extension and in any directory.
@@ -485,16 +496,19 @@ def strip_template_only_sections(destination: Path) -> None:
     """
     Remove the documentation that only applies to the template itself.
 
-    The generated project does not ship ``new_project.py``, so a section
-    telling its reader to run that script describes a file they do not have.
+    A generated project ships neither ``new_project.py`` nor the tests that
+    drive it, so a section telling its reader to run either describes files
+    they do not have - which is exactly the documentation drift the rest of
+    this project works to prevent.
 
     :param destination: The generated project root.
     """
-    readme = destination / "README.md"
-    if not readme.is_file():  # pragma: no cover - the template always ships one
-        return
-    text = readme.read_text(encoding="utf-8")
-    readme.write_text(README_TEMPLATE_ONLY.sub("", text), encoding="utf-8", newline="\n")
+    for relative in TEMPLATE_ONLY_DOCUMENTS:
+        document = destination / relative
+        if not document.is_file():  # pragma: no cover - the template ships them all
+            continue
+        text = document.read_text(encoding="utf-8")
+        document.write_text(README_TEMPLATE_ONLY.sub("", text), encoding="utf-8", newline="\n")
 
 
 def run(command: list[str], cwd: Path) -> bool:
