@@ -1,42 +1,49 @@
 # Debian GNU/Linux
 
-## Prerequisites
+You need two tools: `git` and `uv`. You do not need to install Python
+yourself — `uv` downloads and manages the interpreter this project asks for.
 
-`curl`, `git`, `python` (`dev`, `pip`, `venv`), `uv`
-
-### System-Wide
-
-#### `curl` + Linux build environment
+## 1. Install Git and curl
 
 ```shell
-sudo apt install build-essential libssl-dev zlib1g-dev libbz2-dev \
-libreadline-dev libsqlite3-dev wget curl llvm libncursesw5-dev xz-utils \
-tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+sudo apt install git curl
 ```
 
-#### `git`, `python` (`dev`, `pip`, `venv`)
-
-```shell
-sudo apt install git python3-venv python3-pip python3-dev
-```
-
-### User Specific
-
-The unified tool for Python project virtual environment management:
-[uv](https://docs.astral.sh/uv/getting-started/installation/)
-
-#### `uv`
+## 2. Install uv
 
 ```shell
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-#### Start
+The installer puts `uv` in `~/.local/bin` and adds it to your `PATH` in your
+shell profile. That change only applies to shells started afterwards.
+
+**Open a new terminal, or run `source ~/.bashrc`.**
+
+## 3. Check both are installed
 
 ```shell
-mkdir project_name
-cd project_name
-uv sync
+git --version
+uv --version
 ```
 
-## Back to [README Quality Assurance](../README.md#quality-assurance)
+Both must print a version. If `uv` reports "command not found", your shell has
+not picked up the `PATH` change yet: open a new terminal and try again.
+
+Do not skip this step. Every command in this project starts with `uv`, and a
+missing `uv` is the most common reason the first one fails.
+
+## Building Python from source
+
+Only needed if you ask `uv` to build an interpreter rather than download one,
+which is not the default and not required here:
+
+```shell
+sudo apt install build-essential libssl-dev zlib1g-dev libbz2-dev \
+libreadline-dev libsqlite3-dev wget llvm libncursesw5-dev xz-utils \
+tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+```
+
+## Next
+
+Back to [Get started](../README.md#get-started).
