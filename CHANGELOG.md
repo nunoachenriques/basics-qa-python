@@ -11,6 +11,8 @@ time, so they are summaries rather than a contemporaneous record.
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-08-04
+
 The release that turns this from a worked example into a template: one
 command creates a new project, one command prepares a fresh clone, and the
 gates are tested rather than merely configured.
@@ -184,7 +186,8 @@ The test suite itself:
 
 - Formatting line length set to 100 (previously 120).
 
-[Unreleased]: https://github.com/nunoachenriques/basics-qa-python/compare/3.0.0...HEAD
+[Unreleased]: https://github.com/nunoachenriques/basics-qa-python/compare/4.0.0...HEAD
+[4.0.0]: https://github.com/nunoachenriques/basics-qa-python/compare/3.0.0...4.0.0
 [3.0.0]: https://github.com/nunoachenriques/basics-qa-python/compare/2.0.1...3.0.0
 [2.0.1]: https://github.com/nunoachenriques/basics-qa-python/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/nunoachenriques/basics-qa-python/compare/1.0.0...2.0.0

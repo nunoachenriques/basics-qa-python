@@ -1,6 +1,6 @@
 [project]
 name = "basics-qa-python"
-version = "3.0.0"
+version = "4.0.0"
 description = "Basics on Quality Assurance in Python"
 readme = "README.md"
 license = "Apache-2.0"
