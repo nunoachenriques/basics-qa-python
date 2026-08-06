@@ -2,23 +2,30 @@ repos:
   - repo: local
     hooks:
 
-      ### CODE FORMATTING
-
-      - id: black
-        name: black
-        stages: [ pre-commit ]
-        language: system
-        entry: uv run black .
-        types: [ python ]
-
       ### CODE STYLE ENFORCEMENT + SECURITY
+      #
+      # Before the formatter, which is the order ruff recommends and the one
+      # new_project.py and qa.py use. Sorting imports is a linter fix, so
+      # running the formatter first leaves whatever the linter then rewrites
+      # as the final state, never having been through the formatter.
 
       - id: ruff
         name: ruff
         stages: [ pre-commit ]
         language: system
-        entry: uv run ruff check .
+        entry: uv run ruff check . --fix
         types: [ python ]
+        pass_filenames: false
+
+      ### CODE FORMATTING
+
+      - id: ruff-format
+        name: ruff format
+        stages: [ pre-commit ]
+        language: system
+        entry: uv run ruff format .
+        types: [ python ]
+        pass_filenames: false
 
       ### TYPE CHECKING
 
@@ -38,4 +45,19 @@ repos:
         language: system
         entry: uv run pytest
         types: [ python ]
+        pass_filenames: false
+
+      ### SECURITY
+      #
+      # On push rather than commit: it reaches the network, which is too slow
+      # to sit in front of every commit. always_run, because a dependency is
+      # changed in pyproject.toml and uv.lock, and a hook restricted to
+      # python files would skip the very commit that introduced the problem.
+
+      - id: pip-audit
+        name: pip-audit
+        stages: [ pre-push ]
+        language: system
+        entry: uv run pip-audit
+        always_run: true
         pass_filenames: false

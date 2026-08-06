@@ -1,0 +1,49 @@
+# MUTATION TESTING - cosmic-ray
+#
+# Coverage says a line RAN. This asks whether any assertion would have
+# NOTICED it changing, which is the question a 100% coverage figure looks
+# like it answers and does not. Each mutant is one small alteration to the
+# source; a mutant the suite still passes is a line nothing is checking.
+#
+# Not a gate, and deliberately not in the dev group: one test run per
+# mutant is far too slow to sit in front of a commit. Run it after
+# changing the code it covers, and read the survivors.
+#
+#   uv run --group mutation cosmic-ray init mutation.toml mutation.sqlite
+#   uv run --group mutation cosmic-ray exec mutation.toml mutation.sqlite
+#   uv run --group mutation cr-report --show-diff mutation.sqlite
+#
+# VERIFY THE HARNESS BEFORE BELIEVING THE SCORE. Point `test-command` at
+# tests that cannot possibly cover the module and run it again: almost
+# every mutant must SURVIVE. If they are all reported killed, the command
+# is failing for its own reasons and every "kill" is a lie. That is
+# precisely what a bare `python -m pytest` did here. It resolved to an
+# interpreter outside the project with no pytest installed, exited
+# non-zero every time, and produced a flawless score measuring nothing.
+# `cosmic-ray baseline` says so too, and its complaint is worth reading
+# rather than working around.
+#
+# `uv run --no-sync`, therefore: the project's own interpreter, without
+# re-syncing on each of several hundred invocations.
+#
+# Change `module-path` and `test-command` together to cover the other
+# module. new_project.py is not covered here on purpose: its tests copy
+# the whole repository and run real tools against the copy, so its 262
+# mutants take about seven minutes - worth doing deliberately, too slow to
+# leave in the routine command.
+#
+#   module-path  = "basics"
+#   test-command = "... tests/test_cli.py"
+
+[cosmic-ray]
+module-path = "qa.py"
+timeout = 120.0
+excluded-modules = []
+# --no-cov: the coverage gate would fail every mutant for reasons having
+# nothing to do with the mutant.
+# -p no:randomly: a mutant must be the only thing differing between runs.
+# -x: stop at the first failure, so a killed mutant is found quickly.
+test-command = "uv run --no-sync python -m pytest -x -q --no-cov -p no:randomly tests/test_qa.py"
+
+[cosmic-ray.distributor]
+name = "local"

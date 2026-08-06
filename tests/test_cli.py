@@ -13,19 +13,34 @@
 #  limitations under the License.
 
 """
-Basics on Quality Assurance in Python
+Basics on Quality Assurance in Python.
 
 Test ``cli`` module.
 This is an integration test.
 """
 
+import logging
 import subprocess
 import sys
 
 import pytest
 
-from basics.cli import Cli
-from tests import __version__
+from basics import __version__
+from basics.cli import Cli, main
+
+#: Both imports above come from the project package, so renaming the project
+#: moves them together and the block stays sorted whatever the new name is.
+#: Importing the version from ``tests`` instead put a second top-level name
+#: in the block, and a package renamed to anything after "tests" in the
+#: alphabet then left a generated project failing its own import-order gate.
+
+#: Held in names rather than repeated inline. Spelled out in full twice, the
+#: expected log line runs past the line-length limit and needs a suppression
+#: comment, which a shorter project name then makes unused - itself a lint
+#: error. The generated project failed one way or the other; kept short, the
+#: line fits whatever the project is called.
+TITLE = "Basics on Quality Assurance in Python"
+STARTED = "| option1: OPTION1 | argument1: ARGUMENT1 | Started"
 
 
 def _test_cli(
@@ -58,66 +73,153 @@ def _test_cli(
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
     )
-    if result.returncode != code_expected:
-        msg = f"The return code ({result.returncode}) is not the expected ({code_expected})!"
-        raise ValueError(msg)
+    assert result.returncode == code_expected, (
+        f"The return code ({result.returncode}) is not the expected ({code_expected})!"
+    )
     for result_stdout_line, output_expected_line in zip(
         result.stdout.splitlines(),
         output_expected,
         strict=True,
     ):
         result_line = result_stdout_line.split("|", maxsplit=2)[-1]
-        if result_line != output_expected_line:
-            msg = f"The result line ({result_line}) is not the expected ({output_expected_line})!"
-            raise ValueError(msg)
+        assert result_line == output_expected_line, (
+            f"The result line ({result_line}) is not the expected ({output_expected_line})!"
+        )
 
 
 class TestCli:
     """Test the py:mod:`cli` module."""
 
-    def test_bootstrap_run(self: "TestCli") -> None:
+    def test_bootstrap_run(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
         """Test the Cli.bootstrap.run sequence with one argument."""
-        # simulate argument from command line
-        sys.argv.append("ARGUMENT1")
+        monkeypatch.setattr(sys, "argv", ["app_cli.py", "ARGUMENT1"])
         with pytest.raises(SystemExit) as cm:
             Cli().bootstrap().run()
-        if not cm.match("0"):
-            msg = "Zero (0) value expected!"
-            raise ValueError(msg)
+        # cm.value.code, not cm.match("0"): match is a regex search over the
+        # string form, so it also passes for 10, 20, and 100.
+        assert cm.value.code == 0
 
+    def test_version_flag_exits_zero(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """--version prints the version and exits successfully."""
+        monkeypatch.setattr(sys, "argv", ["app_cli.py", "--version"])
+        with pytest.raises(SystemExit) as cm:
+            Cli().bootstrap()
+        assert cm.value.code == 0
+        assert __version__ in capsys.readouterr().out
+
+    def test_help_names_the_running_program_not_a_file(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """The usage examples used to name app_cli.py, which no wheel ships."""
+        monkeypatch.setattr(sys, "argv", ["basics-qa", "--help"])
+        with pytest.raises(SystemExit) as cm:
+            Cli().bootstrap()
+        assert cm.value.code == 0
+        printed = capsys.readouterr().out
+        assert "app_cli.py" not in printed
+        assert "basics-qa -v argument1" in printed
+
+    def test_version_prints_the_version_and_nothing_else(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        """Anything else printed alongside it breaks whoever parses the output."""
+        # `--version` is what a script or a package manager reads to find out
+        # what is installed, so a friendly prefix would be a breaking change.
+        monkeypatch.setattr(sys, "argv", ["app_cli.py", "--version"])
+        with pytest.raises(SystemExit):
+            Cli().bootstrap()
+        assert capsys.readouterr().out == f"{__version__}\n"
+
+    def test_a_third_v_is_still_debug(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """`-vvv` is what people type when they want more; it must not fall over."""
+        monkeypatch.setattr(sys, "argv", ["app_cli.py", "ARGUMENT1", "-vvv"])
+        Cli().bootstrap()
+        # The package logger, which is where bootstrap sets the level, derived
+        # from the class rather than named, so that renaming cannot miss it.
+        assert logging.getLogger(Cli.__module__.partition(".")[0]).level == logging.DEBUG
+
+    def test_a_double_dash_allows_an_argument_that_looks_like_an_option(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Without `--`, argparse reads a leading dash as a flag it does not have."""
+        monkeypatch.setattr(sys, "argv", ["app_cli.py", "--", "-x"])
+        assert Cli().bootstrap().argument1 == "-x"
+
+    def test_the_logging_format_replaces_one_already_installed(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Without `force=True`, basicConfig does nothing at all once a handler exists."""
+        # Found by mutation testing: flipping force=True to force=False left
+        # every test passing. It is load-bearing - a library, a framework, or
+        # an earlier import may already have configured the root logger, and
+        # without force the format chosen here is silently ignored. It is
+        # also the reason tests/conftest.py has to restore the root handlers.
+        already_there = logging.StreamHandler()
+        logging.getLogger().addHandler(already_there)
+        monkeypatch.setattr(sys, "argv", ["app_cli.py", "ARGUMENT1", "-v"])
+        Cli().bootstrap()
+        assert already_there not in logging.getLogger().handlers
+
+    def test_main_entry_point(
+        self: "TestCli",
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """The console-script entry point runs the same sequence."""
+        monkeypatch.setattr(sys, "argv", ["basics-qa", "ARGUMENT1"])
+        with pytest.raises(SystemExit) as cm:
+            main()
+        assert cm.value.code == 0
+
+    @pytest.mark.integration
     def test_cli(self: "TestCli") -> None:
         """Test the command-line interface with various arguments and options."""
         code_expected = 0
         output_expected: list[str] = []
         # Test ONE ARGUMENT, ZERO OPTIONS
         _test_cli(
-            ["uv", "run", "python", "app_cli.py", "ARGUMENT1"],
+            [sys.executable, "app_cli.py", "ARGUMENT1"],
             code_expected,
             output_expected,
         )
         # Test ONE ARGUMENT, ONE OPTION
         _test_cli(
-            ["uv", "run", "python", "app_cli.py", "-o", "OPTION1", "ARGUMENT1"],
+            [sys.executable, "app_cli.py", "-o", "OPTION1", "ARGUMENT1"],
             code_expected,
             output_expected,
         )
         # Test ONE ARGUMENT, ONE OPTION, ONE VERBOSE
         output_expected = [
             " INFO | Logging set to INFO",
-            f" INFO | Basics QA Python {__version__} | option1: OPTION1 | argument1: ARGUMENT1 | Started",  # noqa: E501
+            f" INFO | {TITLE} {__version__} {STARTED}",
         ]
         _test_cli(
-            ["uv", "run", "python", "app_cli.py", "-o", "OPTION1", "ARGUMENT1", "-v"],
+            [sys.executable, "app_cli.py", "-o", "OPTION1", "ARGUMENT1", "-v"],
             code_expected,
             output_expected,
         )
         # Test ONE ARGUMENT, ONE OPTION, TWO VERBOSE
         output_expected = [
             " bootstrap | INFO | Logging set to DEBUG",
-            f" run | INFO | Basics QA Python {__version__} | option1: OPTION1 | argument1: ARGUMENT1 | Started",  # noqa: E501
+            f" run | INFO | {TITLE} {__version__} {STARTED}",
         ]
         _test_cli(
-            ["uv", "run", "python", "app_cli.py", "-o", "OPTION1", "ARGUMENT1", "-vv"],
+            [sys.executable, "app_cli.py", "-o", "OPTION1", "ARGUMENT1", "-vv"],
             code_expected,
             output_expected,
         )

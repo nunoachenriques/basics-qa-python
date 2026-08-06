@@ -13,12 +13,12 @@
 #  limitations under the License.
 
 """
-Basics on Quality Assurance in Python
+Basics on Quality Assurance in Python.
 
 Application helper for the command-line interface.
 """
 
-from basics.cli import Cli
+from basics.cli import main
 
 if __name__ == "__main__":
-    Cli().bootstrap().run()
+    main()
