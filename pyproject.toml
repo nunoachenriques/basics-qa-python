@@ -1,6 +1,6 @@
 [project]
 name = "basics-qa-python"
-version = "4.0.0"
+version = "4.0.1"
 description = "Basics on Quality Assurance in Python"
 readme = "README.md"
 license = "Apache-2.0"
@@ -8,6 +8,7 @@ license-files = ["LICENSE"]
 authors = [
   {name = "Nuno A. C. Henriques", email = "nunoachenriques@gmail.com"},
   {name = "Alexandre Almeida", email = "alex.mf.alm@gmail.com"},
+  {name = "Pedro Nascimento", email = "pedro.nascimento1111@gmail.com"},
 ]
 maintainers = [
   {name = "Nuno A. C. Henriques", email = "nunoachenriques@gmail.com"},
@@ -61,7 +62,7 @@ dev = [
     # another test happened to run first leaves a suite that is green and
     # lying; running them in the same order every time is what hides it.
     "pytest-randomly>=4.1.0",
-    "ruff>=0.12.9,<0.13",  # pre-1.0: minor bumps can add newly-enabled rules
+    "ruff>=0.16.0,<0.17",  # pre-1.0: minor bumps can add newly-enabled rules
 ]
 # Two groups that `uv sync --dev` deliberately does NOT install, so they
 # cost a generated project nothing but stay pinned, cooled down, and

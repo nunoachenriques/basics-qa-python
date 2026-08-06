@@ -7,7 +7,7 @@ Thanks for considering a contribution!
 - Install the prerequisites for your operating system:
   [Linux](docs/README-Linux.md), [macOS](docs/README-macOS.md), or
   [Windows](docs/README-Windows.md).
-- Skim [Quality assurance, step by step](docs/README-QA-Steps.md) to see
+- Skim [QA, step by step](docs/README-QA-Steps.md) to see
   which tools run and why.
 
 ## Workflow

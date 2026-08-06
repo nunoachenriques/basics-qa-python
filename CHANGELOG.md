@@ -11,6 +11,29 @@ time, so they are summaries rather than a contemporaneous record.
 
 ## [Unreleased]
 
+## [4.0.1] - 2026-08-06
+
+### Added
+
+- Pedro Nascimento joins the authors, and the History tells how: Nuno's
+  challenge to contribute, taken up and reviewed together as a team.
+
+### Changed
+
+- "Quality assurance" shortened to "QA" in prose, headings, and the GitHub
+  workflow name. The project title keeps the full phrase.
+- Ruff bumped from `>=0.12.9,<0.13` to `>=0.16.0,<0.17`. No newly-enabled
+  rule fires and the formatter output is unchanged, so the bump is the
+  specifier, the lock, and the guide's example of it.
+
+### Fixed
+
+- The README's Contents list rendered as five separate lists with gaps
+  between them: the template-only markers at column zero are HTML blocks,
+  which end a list in CommonMark. The markers inside the list are now
+  indented as list-item continuation lines, and the scaffolder's pattern
+  accepts the indentation.
+
 ## [4.0.0] - 2026-08-04
 
 The release that turns this from a worked example into a template: one
@@ -186,7 +209,8 @@ The test suite itself:
 
 - Formatting line length set to 100 (previously 120).
 
-[Unreleased]: https://github.com/nunoachenriques/basics-qa-python/compare/4.0.0...HEAD
+[Unreleased]: https://github.com/nunoachenriques/basics-qa-python/compare/4.0.1...HEAD
+[4.0.1]: https://github.com/nunoachenriques/basics-qa-python/compare/4.0.0...4.0.1
 [4.0.0]: https://github.com/nunoachenriques/basics-qa-python/compare/3.0.0...4.0.0
 [3.0.0]: https://github.com/nunoachenriques/basics-qa-python/compare/2.0.1...3.0.0
 [2.0.1]: https://github.com/nunoachenriques/basics-qa-python/compare/2.0.0...2.0.1

@@ -130,8 +130,11 @@ so leave it in place and add your own beside it as you rewrite a file."""
 #: Marks the part of the README that only makes sense in the template, and
 #: is removed from a generated project. A generated project does not ship
 #: ``new_project.py``, so instructions for running it cannot be followed.
+#: A marker may be indented: inside the README's Contents list the markers
+#: sit as list-item continuation lines, because a comment at column zero is
+#: an HTML block that splits the list into separate lists when rendered.
 README_TEMPLATE_ONLY = re.compile(
-    r"<!-- template-only:start -->\n.*?<!-- template-only:end -->\n",
+    r"[ \t]*<!-- template-only:start -->\n.*?<!-- template-only:end -->\n",
     re.DOTALL,
 )
 
