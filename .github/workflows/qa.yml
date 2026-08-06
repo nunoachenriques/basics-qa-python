@@ -56,7 +56,7 @@ jobs:
       UV_MALWARE_CHECK: "1"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Do not leave the job's credentials in .git/config. Nothing here
           # pushes - `permissions` above is read-only - and a token left in
@@ -101,7 +101,7 @@ jobs:
     env:
       UV_MALWARE_CHECK: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
@@ -126,7 +126,7 @@ jobs:
       # This job resolves and downloads too, so it needs the same check.
       UV_MALWARE_CHECK: "1"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Do not leave the job's credentials in .git/config. Nothing here
           # pushes - `permissions` above is read-only - and a token left in
