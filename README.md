@@ -74,7 +74,7 @@ uv run python app_cli.py hello -o world -v
 
 ```text
 2026-01-15 09:00:00,000 | basics.cli | INFO | Logging set to INFO
-2026-01-15 09:00:00,000 | basics.cli | INFO | Basics on Quality Assurance in Python 4.0.0 | option1: world | argument1: hello | Started
+2026-01-15 09:00:00,000 | basics.cli | INFO | Basics on Quality Assurance in Python 4.0.1 | option1: world | argument1: hello | Started
 ```
 
 Here `hello` is the required argument and `world` the optional one. In the
