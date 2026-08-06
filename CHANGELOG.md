@@ -11,6 +11,14 @@ time, so they are summaries rather than a contemporaneous record.
 
 ## [Unreleased]
 
+### Fixed
+
+- The README's Contents list rendered as five separate lists with gaps
+  between them: the template-only markers at column zero are HTML blocks,
+  which end a list in CommonMark. The markers inside the list are now
+  indented as list-item continuation lines, and the scaffolder's pattern
+  accepts the indentation.
+
 ### Changed
 
 - "Quality assurance" shortened to "QA" in prose, headings, and the GitHub

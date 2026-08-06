@@ -19,17 +19,17 @@ you.
 
 * [Get started](#get-started)
 * [The application skeleton](#the-application-skeleton)
-<!-- template-only:start -->
+  <!-- template-only:start -->
 * [Start a new project](#start-a-new-project)
-<!-- template-only:end -->
+  <!-- template-only:end -->
 * [Everyday commands](#everyday-commands)
 * [How the checks fit together](#how-the-checks-fit-together)
 * [Install the prerequisites](#install-the-prerequisites)
 * [Contributing](CONTRIBUTING.md)
 * [Changelog](CHANGELOG.md)
-<!-- template-only:start -->
+  <!-- template-only:start -->
 * [History](#history)
-<!-- template-only:end -->
+  <!-- template-only:end -->
 * [License](#license)
 
 ## Get started
