@@ -250,6 +250,10 @@ automate, and guarantee a proper normalised and more secure code.
 By me [Nuno A. C. Henriques](https://github.com/nunoachenriques) and by
 [Alexandre Almeida](https://github.com/alexandre1-almeida)'s precious
 contributions in code and vivid discussions!
+
+In 2026, [Pedro Nascimento](https://github.com/PNascimento11) took up Nuno's
+challenge to contribute. What began as a dare became a pleasure:
+building, questioning, and reviewing everything together as a team.
 <!-- template-only:end -->
 
 ## License

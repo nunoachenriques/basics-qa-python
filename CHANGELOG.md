@@ -19,6 +19,11 @@ time, so they are summaries rather than a contemporaneous record.
   indented as list-item continuation lines, and the scaffolder's pattern
   accepts the indentation.
 
+### Added
+
+- Pedro Nascimento joins the authors, and the History tells how: Nuno's
+  challenge to contribute, taken up and reviewed together as a team.
+
 ### Changed
 
 - "Quality assurance" shortened to "QA" in prose, headings, and the GitHub

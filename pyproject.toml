@@ -8,6 +8,7 @@ license-files = ["LICENSE"]
 authors = [
   {name = "Nuno A. C. Henriques", email = "nunoachenriques@gmail.com"},
   {name = "Alexandre Almeida", email = "alex.mf.alm@gmail.com"},
+  {name = "Pedro Nascimento", email = "pedro.nascimento1111@gmail.com"},
 ]
 maintainers = [
   {name = "Nuno A. C. Henriques", email = "nunoachenriques@gmail.com"},
