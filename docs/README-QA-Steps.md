@@ -390,7 +390,7 @@ uv add some-package --dev
 ```
 
 `uv add` rewrites `pyproject.toml` and will replace a pinned specifier such as
-`ruff>=0.12.9,<0.13` with an unbounded one. Check the diff before committing.
+`ruff>=0.16.0,<0.17` with an unbounded one. Check the diff before committing.
 
 ## Packaging
 
