@@ -1,4 +1,4 @@
-# Quality assurance, step by step
+# QA, step by step
 
 What each check is for, and why it is configured the way it is.
 

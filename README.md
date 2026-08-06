@@ -214,7 +214,7 @@ thought of, `hypothesis` generates input looking for the one that breaks it —
 `tests/test_qa.py` has a worked example to copy.
 
 For the reasoning behind each choice, see
-[Quality assurance, step by step](docs/README-QA-Steps.md).
+[QA, step by step](docs/README-QA-Steps.md).
 
 To test the hooks themselves:
 

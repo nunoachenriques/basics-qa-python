@@ -13,6 +13,8 @@ time, so they are summaries rather than a contemporaneous record.
 
 ### Changed
 
+- "Quality assurance" shortened to "QA" in prose, headings, and the GitHub
+  workflow name. The project title keeps the full phrase.
 - Ruff bumped from `>=0.12.9,<0.13` to `>=0.16.0,<0.17`. No newly-enabled
   rule fires and the formatter output is unchanged, so the bump is the
   specifier, the lock, and the guide's example of it.
