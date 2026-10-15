@@ -57,7 +57,7 @@ dev = [
     "pip-audit>=2.7.3",
     "pre-commit>=4.3.0",
     "pytest>=9.0.3",
-    "pytest-cov>=6.2.1,<7",  # 7.x changed subprocess coverage measurement; see commit message
+    "pytest-cov>=6.2.1,<8",  # 7.x changed subprocess coverage measurement; see commit message
     # Shuffles the test order on every run. A test that passes only because
     # another test happened to run first leaves a suite that is green and
     # lying; running them in the same order every time is what hides it.
